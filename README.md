@@ -3,7 +3,7 @@
 Python project dedicated to satellite data visualisation, handling and statistics.
 
 
-# 🚀 Installation :
+## 🚀 Installation :
 
 Clone the repository an install dependencies in virtual environnement :
 

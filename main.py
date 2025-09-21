@@ -1,20 +1,27 @@
 
+from pathlib import Path
 import os,sys
 import eumdac
 import json
 import logging
 
 # Basic Logging configuration
+LOG_FILE = Path(__file__).with_suffix('.log')
 script_name = os.path.basename(__file__)
-logger = logging.getLogger(script_name)
+#logger = logging.getLogger(script_name)
+
 logging.basicConfig(
     level=logging.INFO,  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s",
     handlers=[
-        logging.FileHandler("app.log", mode="w"),  # log dans un fichier
-        logging.StreamHandler()  # log aussi dans la console
-    ]
+        logging.FileHandler(LOG_FILE, encoding="utf-8", mode="w"),  # log dans un fichier
+        logging.StreamHandler(sys.stdout)  # log aussi dans la console
+    ],
+    # crucial if VSCode or Ipython already touched the logging
+    force=True
 )
+# Name of the logger :
+logger = logging.getLogger(Path(__file__).stem)
 
 logger.info("Program launched.")
 # EUMETSAT authentification
@@ -26,7 +33,7 @@ consumer_secret = d["secret"]
 token = eumdac.AccessToken((consumer_key, consumer_secret))
 
 datastore = eumdac.DataStore(token)
-logger.info('Athentification suceed.')
+logger.info('Athentification succeed.')
 
 
 # Exemple : MTG-FCI
@@ -42,7 +49,7 @@ results = collection.search(
 products = list(results)[-1:]   # Select last product
 
 for product in products:
-    logger.info(f"Produit : {product}")
+    logger.info(f"Product : {product}")
 
     target_dir = "./meteosat_data"
     os.makedirs(target_dir, exist_ok=True)
