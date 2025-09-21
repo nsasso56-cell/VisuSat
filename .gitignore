@@ -1,3 +1,4 @@
+
 inputs/*
 !inputs/id_EUMETSAT_template.json
 
@@ -8,3 +9,6 @@ outputs/*
 .vscode/
 venv/
 .DS_Store
+
+# Log files :
+*.log

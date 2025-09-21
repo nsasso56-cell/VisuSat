@@ -8,6 +8,7 @@ fonttools==4.60.0
 idna==3.10
 importlib_resources==6.5.2
 kiwisolver==1.4.7
+logging==0.4.9.6
 matplotlib==3.9.4
 numpy==2.0.2
 packaging==25.0
