@@ -4,6 +4,17 @@ import os,sys
 import eumdac
 import json
 import logging
+import cartopy
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+from netCDF4 import Dataset
+import h5py
+import hdf5plugin
+
+from satpy import Scene
+from satpy import find_files_and_readers
+
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix('.log')
@@ -36,17 +47,19 @@ datastore = eumdac.DataStore(token)
 logger.info('Athentification succeed.')
 
 
-# Exemple : MTG-FCI
-required_collection = 'EO:EUM:DAT:0677'
+# Collection required :
+required_collection = "EO:EUM:DAT:0677" # FCI AllSky radiance Level2 product
+# required_collection =  "EO:EUM:DAT:MSG:HRSEVIRI" # 'EO:EUM:DAT:0677'
 logger.info(f'Get Collection {required_collection}')
 collection = datastore.get_collection(required_collection)
 
 # Research on a recent period (last day)
 results = collection.search(
-    dtstart="2025-09-16T00:00:00Z",
-    dtend="2025-09-17T00:00:00Z"
+    dtstart="2025-09-20T00:00:00Z",
+    dtend="2025-09-20T12:00:00Z"
 )
-products = list(results)[-1:]   # Select last product
+
+products = list(results)[:1]   # Select last product
 
 for product in products:
     logger.info(f"Product : {product}")
@@ -56,13 +69,81 @@ for product in products:
 
 
     # Ouverture du produit (renvoie un flux HTTP)
-    with product.open() as response:
-        outfile = os.path.join(target_dir, f"{product._id}.nc")
-        with open(outfile, "wb") as f:
-            f.write(response.read())
-        logger.info(f"Product saved : {outfile}")
+    # with product.open() as response:
+    #     outfile = os.path.join(target_dir, f"{product._id}.nc")
+    #     if os.path.exists(outfile) == False:
+    #         with open(outfile, "wb") as f:
+    #             f.write(response.read())
+    #         logger.info(f"Product saved : {outfile}")
+    #     else :
+    #         logger.info(f'Output file already exists : {outfile}')
+    for entry in product.entries:
+
+        if entry.endswith(".nc"):
+            logger.info("Download of NetCDF :", entry)
+            target_file = os.path.join(target_dir, entry)
+            if os.path.exists(target_file) == False:
+                with product.open(entry) as fsrc, open(target_file, "wb") as fdst:
+                    fdst.write(fsrc.read())
+                logger.info("→ File saved :", target_file)
+            else : 
+                logger.info(f"Target file already existent : {target_file}")
+    
+
+# ds = xr.open_dataarray(outfile, engine = "netcdf4")
+
+
+# with h5py.File(outfile, "r") as f:
+#     print("Groupes au niveau racine :", list(f.keys()))
+
+#     # Explorer récursivement
+#     def explore(name, obj):
+#         print(name, obj.shape if hasattr(obj, 'shape') else '')
+#     f.visititems(explore)
+
+
+# ds = Dataset(outfile, "r")
+# print(ds)
+# print(ds.variables.keys())
+
+
+# Find readers for sat files in Satpy :
+# files, readers = find_files_and_readers(
+#     base_dir="./meteosat_data", 
+#     reader=None,   # Satpy va deviner
+#     reader_kwargs={})
+
+# logger.info("Readers possibles :", readers)
+# logger.info("Fichiers trouvés :", files)
+
+# Afficher
+
+ds = xr.open_dataset(target_file)
+
+arr = ds["radiance_mean"].values
+logger.info("All NaN ? ->", np.isnan(arr).all())
+logger.info("Proportion of NaN ->", np.isnan(arr).sum() / arr.size)
+
+# lats = ds["latitude"].values
+# lons = ds["longitude"].values
+# val = ds["data"].values
+
+# logger.info(f"Lat shape : {lats.shape}")
+# logger.info(f"Lon shape : {lons.shape}")
+# logger.info(f"data shape : {val.shape}")
+
+
+vals = ds["radiance_mean"].values
+channel = 7
+fig, axes = plt.subplots(2, 3, figsize=(12, 8))
+for cat in range(6):
+    ax = axes.flat[cat]
+    img = vals[:, :, channel, cat]
+    im = ax.imshow(img, origin="lower")
+    ax.set_title(f"Category {cat}")
+    plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+plt.suptitle(f"FCI AllSkyRadiance - Channel {channel}")
+plt.show()
 
 logger.info('End program.')
-
-
-
