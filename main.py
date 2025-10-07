@@ -1,22 +1,11 @@
 
-from pathlib import Path
-import os,sys
-import eumdac
-import json
 import logging
-import cartopy
-import numpy as np
-import xarray as xr
-import matplotlib.pyplot as plt
-from netCDF4 import Dataset
-import h5py
-import hdf5plugin
-from src import eumetsat
+import os
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
-from satpy import Scene
-from satpy import find_files_and_readers
-
+from src import eumetsat
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix('.log')

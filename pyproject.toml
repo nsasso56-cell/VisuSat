@@ -1,0 +1,46 @@
+[project]
+name = "VisuSat"
+version = "0.1.0"
+description = "Scripts and functions to download and visualize satellite data (EUMETSAT, Copernicus Marine Service, etc)"
+authors = [{ name = "Nicolas Sasso" }]
+requires-python = ">=3.9"
+dependencies = [
+    "eumdac",
+    "xarray",
+    "matplotlib",
+    "cartopy",
+    "netCDF4",
+    "pandas>=2.3.3",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# Dev dependencies :
+
+
+
+# Linting and formatting :
+
+#[tool.uv.scripts]  #Not stable yet !
+#lint = "ruff check src/ > outputs/ruff_report.txt"
+#format = "black src/"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+src = ["src"]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "I"]  # errors, styles, import order
+ignore = ["E501"]         # ignore too long lines. 
+fix = false               # if true, allows `ruff --fix` dto correct automatically

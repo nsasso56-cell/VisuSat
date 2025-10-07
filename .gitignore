@@ -1,13 +1,22 @@
 
+# Input data (exception for templates)
 inputs/*
 !inputs/id_EUMETSAT_template.json
 
+# Data directories :
 meteosat_data/*
 data/*
 
+# Output directories :
 outputs/*
 
+# .egg-info dirs :
+*.egg-info/
+
+
+# VSCode dirs and virtual envs
 .vscode/
+.venv/
 venv/
 .DS_Store
 
