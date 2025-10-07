@@ -3,6 +3,7 @@ inputs/*
 !inputs/id_EUMETSAT_template.json
 
 meteosat_data/*
+data/*
 
 outputs/*
 
