@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-
+from src.eumetsat_products_registry import *
 from src import eumetsat
 
 # Basic Logging configuration
@@ -28,11 +28,18 @@ logger = logging.getLogger(Path(__file__).stem)
 
 logger.info("Program launched.")
 
+# Load EUMETSAT products registry :
+load_registry()
+
 start_time = datetime.utcnow() - timedelta(hours=6)
 end_time = datetime.utcnow() - timedelta(hours=2)
 
 # Collection required :
-required_collection = "EO:EUM:DAT:0677"  # FCI AllSky radiance Level2 product
+required_collection = ""  # Registry in data/EUMETSAT_products_registry
+# Load EUMETSAT products registry :
+load_registry()
+product = PRODUCTS[required_collection]
+
 output_files = eumetsat.download_data(
     required_collection, start_time, end_time, last=True
 )

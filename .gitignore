@@ -6,6 +6,7 @@ inputs/*
 # Data directories :
 meteosat_data/*
 data/*
+!data/eumetsat_products.json
 
 # Output directories :
 outputs/*

@@ -1,0 +1,16 @@
+{
+  "EO:EUM:DAT:MSG:HRSEVIRI": {
+    "collection_id": "EO:EUM:DAT:MSG:HRSEVIRI",
+    "name": "Radiance MSG SEVIRI",
+    "level": "L1",
+    "n_categories": 6,
+    "description": "High-resolution visible/infrared radiances"
+  },
+  "EO:EUM:DAT:MSG:AMV": {
+    "collection_id": "EO:EUM:DAT:MSG:AMV",
+    "name": "Atmospheric Motion Vectors",
+    "level": "L2",
+    "n_categories": 3,
+    "description": "AMV product derived from SEVIRI imagery"
+  }
+}
