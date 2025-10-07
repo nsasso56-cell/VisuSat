@@ -13,5 +13,10 @@ cd VisuSat
 uv sync
 ```
 
+## 📬 Contact
 
-Author : Nicolas SASSO, [n.sasso56@gmail.com](mailto:n.sasso56@gmail.com)
+If you have any questions or suggestions :
+
+Author : Nicolas SASSO.
+- e-mail : [n.sasso56@gmail.com](mailto:n.sasso56@gmail.com)
+- LinkedIn : [linkedin.com/in/nicolas-sasso-6356ab172](http://www.linkedin.com/in/nicolas-sasso-6356ab172)
