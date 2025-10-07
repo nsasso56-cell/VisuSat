@@ -8,10 +8,10 @@ dependencies = [
     "eumdac",
     "xarray",
     "matplotlib",
-    "cartopy",
     "netCDF4",
     "pandas>=2.3.3",
 ]
+
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -23,19 +23,15 @@ where = ["src"]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+
 # Dev dependencies :
-
-
+[dependency-groups]
+dev = ["ruff", "black"]
 
 # Linting and formatting :
-
 #[tool.uv.scripts]  #Not stable yet !
 #lint = "ruff check src/ > outputs/ruff_report.txt"
 #format = "black src/"
-
-[tool.black]
-line-length = 88
-target-version = ["py310"]
 
 [tool.ruff]
 src = ["src"]
@@ -44,3 +40,7 @@ target-version = "py310"
 select = ["E", "F", "I"]  # errors, styles, import order
 ignore = ["E501"]         # ignore too long lines. 
 fix = false               # if true, allows `ruff --fix` dto correct automatically
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]

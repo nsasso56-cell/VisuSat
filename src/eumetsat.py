@@ -11,7 +11,13 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 
-def download_data(collection_id, start_time, end_time, last=False, output_file=None):
+def download_data(
+    collection_id,
+    start_time,
+    end_time,
+    last=False,
+    output_file=None,
+):
     """
     Download Eumetsat satellite Data via Eumdac API.
 
@@ -77,14 +83,14 @@ def download_data(collection_id, start_time, end_time, last=False, output_file=N
                 if not os.path.exists(target_file):
                     with product.open(entry) as fsrc, open(target_file, "wb") as fdst:
                         fdst.write(fsrc.read())
-                    logger.info("→ File saved :", target_file)
+                    logger.info(f"→ File saved : {target_file}")
                 else:
                     logger.info(f"Target file already existent : {target_file}")
 
     return outfiles
 
 
-def plot(filename, collection_id, outfile=None, savefig=True):
+def plot(filename, collection_id, outfile=None, savefig=True, display=False):
     """
     Plot the brut data contained in downloaded EUMETSAT .netcdf file.
     Args :
@@ -92,6 +98,7 @@ def plot(filename, collection_id, outfile=None, savefig=True):
         - collection_id : Eumetsat collection ID from where data were extracted (mandatory).
         - outfile : Specification of .png plot output (default = None, autogeneration of output filename).
         - savefig : Specify False for no output save (default = True).
+        - Display : if True, display the figure, not recommended if numerous files to treat. (boolean, default = False)
     """
     project_root = Path(__file__).resolve().parent.parent
     if outfile is None:
@@ -127,4 +134,5 @@ def plot(filename, collection_id, outfile=None, savefig=True):
     if savefig:
         fig.tight_layout()
         fig.savefig(outfile + ".png", format="png", bbox_inches="tight", dpi=300)
-    plt.show()
+    if display:
+        plt.show()

@@ -37,9 +37,7 @@ output_files = eumetsat.download_data(
     required_collection, start_time, end_time, last=True
 )
 
-
 for file in output_files:
     eumetsat.plot(file, required_collection)
-
 
 logger.info("End program.")
