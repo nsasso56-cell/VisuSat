@@ -7,17 +7,24 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 # chemin vers le fichier de registre
-REGISTRY_PATH = Path(os.path.join(Path(__file__).resolve().parent.parent, "data", "eumetsat_products.json"))
+REGISTRY_PATH = Path(
+    os.path.join(
+        Path(__file__).resolve().parent.parent, "data", "eumetsat_products.json"
+    )
+)
+
 
 @dataclass
 class Product:
-    collection_id : str
+    collection_id: str
     name: str
     level: str
     n_categories: int
     description: str = ""
 
+
 PRODUCTS: Dict[str, Product] = {}
+
 
 def load_registry():
     """Charge les produits depuis le JSON (si présent)."""
@@ -38,7 +45,7 @@ def save_registry():
             {cid: asdict(prod) for cid, prod in PRODUCTS.items()},
             f,
             indent=2,
-            ensure_ascii=False
+            ensure_ascii=False,
         )
 
 
@@ -49,11 +56,12 @@ def register_product(product: Product):
     save_registry()
 
 
-
-register_product(Product(
-    collection_id="EO:EUM:DAT:MSG:AMV",
-    name="Atmospheric Motion Vectors",
-    level="L2",
-    n_categories=3,
-    description="AMV product derived from SEVIRI imagery"
-))
+register_product(
+    Product(
+        collection_id="EO:EUM:DAT:MSG:AMV",
+        name="Atmospheric Motion Vectors",
+        level="L2",
+        n_categories=3,
+        description="AMV product derived from SEVIRI imagery",
+    )
+)

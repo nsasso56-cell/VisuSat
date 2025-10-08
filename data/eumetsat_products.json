@@ -12,5 +12,12 @@
     "level": "L2",
     "n_categories": 3,
     "description": "AMV product derived from SEVIRI imagery"
+  },
+  "EO:EUM:DAT:0676": {
+    "collection_id": "EO:EUM:DAT:0676",
+    "name": "Atmospheric Motion Vectors FCI",
+    "level": "L2",
+    "n_categories": 3,
+    "description": "AMV product derived from FCI-2 imagery"
   }
 }

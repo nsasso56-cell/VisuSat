@@ -1,6 +1,8 @@
 import logging
 import os
 import sys
+import xarray as xr
+import cartopy
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
@@ -28,14 +30,11 @@ logger = logging.getLogger(Path(__file__).stem)
 
 logger.info("Program launched.")
 
-# Load EUMETSAT products registry :
-load_registry()
-
 start_time = datetime.utcnow() - timedelta(hours=6)
 end_time = datetime.utcnow() - timedelta(hours=2)
 
 # Collection required :
-required_collection = ""  # Registry in data/EUMETSAT_products_registry
+required_collection = "EO:EUM:DAT:0676"  # Registry in data/EUMETSAT_products_registry
 # Load EUMETSAT products registry :
 load_registry()
 product = PRODUCTS[required_collection]
@@ -44,7 +43,10 @@ output_files = eumetsat.download_data(
     required_collection, start_time, end_time, last=True
 )
 
+ds = xr.open_dataset(output_files[0])
+
+
 for file in output_files:
-    eumetsat.plot(file, required_collection)
+    eumetsat.plot_amvs(file, required_collection, display=True)
 
 logger.info("End program.")
