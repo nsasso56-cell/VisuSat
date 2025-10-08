@@ -1,18 +1,26 @@
 import json
 import logging
 import os
-import eumdac
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import numpy as np
-import xarray as xr
-
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from datetime import datetime
 from pathlib import Path
+
+import cartopy.crs as ccrs
+import eumdac
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+import utils
 
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent
+
+matplotlib.rcParams["figure.dpi"] = 200
+matplotlib.rcParams.update(
+    {"text.usetex": True, "font.family": "serif", "font.size": 10}
+)
 
 
 def download_data(
@@ -72,7 +80,7 @@ def download_data(
 
         for entry in product.entries:
             if entry.endswith(".nc"):
-                logger.info("Download of NetCDF :", entry)
+                logger.info(f"Download of NetCDF : {entry}")
                 target_file = os.path.join(target_dir, entry)
                 outfiles.append(target_file)
 
@@ -110,19 +118,11 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         os.makedirs(outdir, exist_ok=True)
         outfile = os.path.join(outdir, Path(filename).stem + ".png")
 
-    ds = xr.open_dataset(filename)
+    ds = utils.safe_open_dataset(filename)
 
     arr = ds["radiance_mean"].values
     logger.info(f"All NaN ? -> {np.isnan(arr).all()}")
     logger.info(f"Proportion of NaN -> { np.isnan(arr).sum() / arr.size}")
-
-    # lats = ds["latitude"].values
-    # lons = ds["longitude"].values
-    # val = ds["data"].values
-
-    # logger.info(f"Lat shape : {lats.shape}")
-    # logger.info(f"Lon shape : {lons.shape}")
-    # logger.info(f"data shape : {val.shape}")
 
     vals = ds["radiance_mean"].values
     channel = n_categories
@@ -142,14 +142,24 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         plt.show()
 
 
-def plot_amvs(filename, collection_id, outfile=None, savefig=True, display=False):
-
+def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=False):
+    """
+    Plot the brut AMVs data contained in downloaded EUMETSAT .netcdf file.
+    Args :
+        - filename : name of the .netcdf file to treat.
+        - collection_id : Eumetsat collection ID from where data were extracted (mandatory).
+        - outfile : Specification of .png plot output (default = None, autogeneration of output filename).
+        - savefig : Specify False for no output save (default = True).
+        - box : set domain to zoom in [lon_min,lon_max, lat_min, lat_max] (list, default = None)
+        - Display : if True, display the figure, not recommended if numerous files to treat. (boolean, default = False)
+    """
+    prefix = ""
     if outfile is None:
-        outdir = os.path.join(project_root, "outputs", collection_id)
+        outdir = os.path.join(project_root, "outputs", product.collection_id)
         os.makedirs(outdir, exist_ok=True)
-        outfile = os.path.join(outdir, "map_uv_"+Path(filename).stem + ".png")
+        outfile = os.path.join(outdir, "map_uv_" + Path(filename).stem + ".png")
 
-    ds = xr.open_dataset(filename)
+    ds = utils.safe_open_dataset(filename)
 
     fig, axes = plt.subplots(
         nrows=1,
@@ -159,6 +169,9 @@ def plot_amvs(filename, collection_id, outfile=None, savefig=True, display=False
     )
     ax = axes.flat
 
+    t_start = utils.isodate(ds.time_coverage_start)
+    t_end = utils.isodate(ds.time_coverage_end)
+
     u_velocity = ds["speed_u_component"].values
     v_velocity = ds["speed_v_component"].values
     latitude = ds["latitude"].values
@@ -166,10 +179,12 @@ def plot_amvs(filename, collection_id, outfile=None, savefig=True, display=False
 
     cmap = plt.get_cmap("jet", 21)
     cmap.set_over("w"), cmap.set_under("k")
-    vmin = 0
-    vmax = 50
+    vmin = -200
+    vmax = -vmin
 
-    im = ax[0].scatter(longitude, latitude, c=u_velocity, s=0.5, cmap=cmap)
+    im = ax[0].scatter(
+        longitude, latitude, c=u_velocity, vmin=vmin, vmax=vmax, s=0.5, cmap=cmap
+    )
     ax[0].set_title("(a) Zonal wind")
     divider = make_axes_locatable(ax[0])
     cax = divider.append_axes("right", size="2%", pad=0.05, axes_class=plt.Axes)
@@ -181,7 +196,9 @@ def plot_amvs(filename, collection_id, outfile=None, savefig=True, display=False
     cbar.set_label("(m/s)")
 
     #
-    im = ax[1].scatter(longitude, latitude, c=v_velocity, s=0.5, cmap=cmap)
+    im = ax[1].scatter(
+        longitude, latitude, c=v_velocity, vmin=vmin, vmax=vmax, s=0.5, cmap=cmap
+    )
     ax[1].set_title("(b) Meridional wind")
     divider = make_axes_locatable(ax[1])
     cax = divider.append_axes("right", size="2%", pad=0.05, axes_class=plt.Axes)
@@ -199,18 +216,30 @@ def plot_amvs(filename, collection_id, outfile=None, savefig=True, display=False
             draw_labels=True, linestyle="--", linewidth=0.5, color="grey"
         )
 
-        # ax.set_extent([dom['lonmin'], dom['lonmax'], dom['latmin'], dom['latmax']])
-        # ax[i].set_extent([-45, 0, 35, 65])
-
         # add these before plotting
         gl.top_labels = False  # suppress top labels
         gl.right_labels = False  # suppress right labels
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
 
+    if box is not None:
+        logger.info(f"Zoom on box {box}.")
+        prefix = prefix + "zoom_"
+        for i in range(len(ax)):
+            ax[i].set_extent(box)
+
+    fig.subplots_adjust(wspace=0.2)
+    fig.suptitle(
+        product.description + "\n" + t_start + "  -  " + t_end
+    )
+
     if savefig:
         fig.tight_layout()
-        fig.savefig(outfile + ".png", format="png", bbox_inches="tight", dpi=300)
+        pathout = Path(outfile)
+        pathout = pathout.with_name(prefix + pathout.name + ".png")
+
+        fig.savefig(pathout, format="png", dpi=300)
+        logger.info(f"Figure saved ➡️ {pathout}")
 
     if display:
         plt.show()

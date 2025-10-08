@@ -1,9 +1,9 @@
 import json
-import os
 import logging
-from dataclasses import dataclass, asdict
-from typing import Dict
+import os
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 # chemin vers le fichier de registre

@@ -47,6 +47,8 @@ ds = xr.open_dataset(output_files[0])
 
 
 for file in output_files:
-    eumetsat.plot_amvs(file, required_collection, display=True)
+    eumetsat.plot_amvs(file, product, display=False)
+
+    eumetsat.plot_amvs(file, product, box = [-40,20,20,80], display=False)
 
 logger.info("End program.")
