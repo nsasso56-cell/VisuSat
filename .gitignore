@@ -10,6 +10,7 @@ data/*
 
 # Output directories :
 outputs/*
+!outputs/examples
 
 # .egg-info dirs :
 *.egg-info/

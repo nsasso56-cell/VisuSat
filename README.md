@@ -2,6 +2,10 @@
 
 Python project dedicated to satellite data visualisation, handling and statistics.
 
+AMVs derived from FCI-2 imagery :
+
+![Example of AMVs vizualisation](outputs/examples/example_AMVs_FCI2.png)
+![Zoom over Northern Atlantic](outputs/examples/zoom_exampleAMVs_FCI2.png)
 
 ## 🚀 Installation :
 
