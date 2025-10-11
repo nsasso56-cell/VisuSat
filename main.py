@@ -34,7 +34,7 @@ start_time = datetime.utcnow() - timedelta(hours=6)
 end_time = datetime.utcnow() - timedelta(hours=2)
 
 # Collection required :
-required_collection = "EO:EUM:DAT:0676"  # Registry in data/EUMETSAT_products_registry
+required_collection = "EO:EUM:DAT:0682"  # Registry in data/EUMETSAT_products_registry
 # Load EUMETSAT products registry :
 load_registry()
 product = PRODUCTS[required_collection]

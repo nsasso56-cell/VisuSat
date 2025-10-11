@@ -19,5 +19,12 @@
     "level": "L2",
     "n_categories": 3,
     "description": "AMV product derived from FCI-2 imagery"
+  },
+  "EO:EUM:DAT:0682": {
+    "collection_id": "EO:EUM:DAT:0682",
+    "name": "Active Fire Monitoring",
+    "level": "L2",
+    "n_categories": 3,
+    "description": "Active Fire Monitoring derived from FCI channel IR-3.8"
   }
 }

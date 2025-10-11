@@ -58,10 +58,10 @@ def register_product(product: Product):
 
 register_product(
     Product(
-        collection_id="EO:EUM:DAT:MSG:AMV",
-        name="Atmospheric Motion Vectors",
+        collection_id="EO:EUM:DAT:0682",
+        name="Active Fire Monitoring",
         level="L2",
         n_categories=3,
-        description="AMV product derived from SEVIRI imagery",
+        description="Active Fire Monitoring derived from FCI channel IR-3.8",
     )
 )
