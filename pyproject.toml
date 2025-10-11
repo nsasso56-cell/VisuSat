@@ -8,8 +8,10 @@ dependencies = [
     "eumdac",
     "xarray",
     "matplotlib",
-    "netCDF4",
     "pandas>=2.3.3",
+    "h5py>=3.14.0",
+    "netcdf4>=1.7.2",
+    "h5netcdf>=1.6.4",
 ]
 
 

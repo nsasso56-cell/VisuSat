@@ -49,7 +49,7 @@ def download_data(
     id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
     with open(id_file) as f:
         d = json.load(f)
-        print(d)
+        #print(d)
     consumer_key = d["consumer"]
     consumer_secret = d["secret"]
     token = eumdac.AccessToken((consumer_key, consumer_secret))
@@ -125,7 +125,7 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
     logger.info(f"Proportion of NaN -> { np.isnan(arr).sum() / arr.size}")
 
     vals = ds["radiance_mean"].values
-    channel = n_categories
+    channel = 7
     fig, axes = plt.subplots(2, 3, figsize=(12, 8))
     for cat in range(6):
         ax = axes.flat[cat]
