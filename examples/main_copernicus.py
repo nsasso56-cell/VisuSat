@@ -40,21 +40,23 @@ REGISTRY_PATH = Path(
 
 
 
-
 request = copernicus.CopernicusRequest(
     dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
-  variables=["sla", "err_sla", "flag_ice"],
-  minimum_longitude=1,
-  maximum_longitude=359,
-  minimum_latitude=-71.81717698546082,
-  maximum_latitude=82.52141057014119,
-  start_datetime="2025-10-22T00:00:00",
-  end_datetime="2025-10-22T00:00:00",
-    output_filename="globaloceanidentifier_oct2025_3.nc"
+    variables=["sla", "err_sla", "flag_ice"],
+    minimum_longitude=1,
+    maximum_longitude=359,
+    minimum_latitude=-71.81717698546082,
+    maximum_latitude=82.52141057014119,
+    start_datetime="2025-10-22T00:00:00",
+    end_datetime="2025-10-22T00:00:00",
+    output_filename="globaloceanidentifier_oct2025.nc"
 )
 
 ds = copernicus.get_copdataset(request)
 print(ds)
+
+
+
 
 sys.exit()
 

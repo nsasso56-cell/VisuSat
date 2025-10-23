@@ -1,3 +1,4 @@
+import os, sys
 import cdsapi
 import copernicusmarine
 import xarray as xr
@@ -7,6 +8,11 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent
+DATA_DIR = Path(
+    os.path.join(project_root, "data")
+    )
+
+
 
 class CopernicusRequest:
     def __init__(
@@ -41,20 +47,28 @@ def get_copdataset(request):
 
     Returns ds : dataset from .netcdf output. 
     '''
-
+    # Output filename in data directory :
+    output_dir = os.path.join(project_root, "data", "copernicus", request.dataset_id)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir,request.output_filename)
+    logging.info(f"Output path : {output_path}")
 
     # Download dataset :
-    copernicusmarine.subset(dataset_id=request.dataset_id,
-    variables=request.variables,
-    minimum_latitude=request.minimum_latitude,
-    maximum_latitude=request.maximum_latitude,
-    minimum_longitude=-request.minimum_longitude,
-    maximum_longitude=request.maximum_longitude,
-    start_datetime=request.start_datetime,
-    end_datetime=request.end_datetime,
-    output_filename=request.output_filename)    
+    if not os.path.exists(output_path):
+        logging.info("Downloading file...")
+        copernicusmarine.subset(dataset_id=request.dataset_id,
+        variables=request.variables,
+        minimum_latitude=request.minimum_latitude,
+        maximum_latitude=request.maximum_latitude,
+        minimum_longitude=-request.minimum_longitude,
+        maximum_longitude=request.maximum_longitude,
+        start_datetime=request.start_datetime,
+        end_datetime=request.end_datetime,
+        output_filename=output_path)    
+    else:
+        logging.info("File already downoaded. Ignore download.")
 
-    ds = xr.open_dataset(request.output_filename)
+    ds = xr.open_dataset(output_path)
 
     return ds
 
