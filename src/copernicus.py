@@ -15,6 +15,25 @@ DATA_DIR = Path(
 
 
 class CopernicusRequest:
+    '''
+    Copernicus request class is used to define a proper request to be proposed to Copernicus Data Store.
+
+    Example of use :
+    request = copernicus.CopernicusRequest(
+    dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
+    variables=["sla", "err_sla", "flag_ice"],
+    minimum_longitude=1,
+    maximum_longitude=359,
+    minimum_latitude=-71.81717698546082,
+    maximum_latitude=82.52141057014119,
+    start_datetime="2025-10-22T00:00:00",
+    end_datetime="2025-10-22T00:00:00",
+    output_filename="globaloceanidentifier_oct2025.nc"
+
+    CopernicusRequest.fetch() to download the data to 
+
+)
+    '''
     def __init__(
         self,
         dataset_id: str,
@@ -26,9 +45,10 @@ class CopernicusRequest:
         minimum_longitude: float,
         maximum_longitude: float,
         output_filename: Optional[str] = None,
+        output_dir: Optional[str] = None,
         extra_params: Optional[Dict[str, str]] = None
     ):
-        self.dataset_id = dataset_id                # ex: "SEALEVEL_GLO_PHY_L4_MY_008_047"
+        self.dataset_id = dataset_id                # ex: "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
         self.variables = variables                  # ex: ["sla", "adt"]
         self.start_datetime = start_datetime         # ex: "2025-01-01T00:00:00"
         self.end_datetime = end_datetime             # ex: "2025-01-10T00:00:00"
@@ -37,7 +57,36 @@ class CopernicusRequest:
         self.minimum_longitude = minimum_longitude
         self.maximum_longitude = maximum_longitude
         self.output_filename = output_filename or "output.nc"
+        self.output_dir = output_dir or os.path.join(project_root, "data", "copernicus", self.dataset_id)
         self.extra_params = extra_params or {}
+
+        # Set output_path :
+        os.makedirs(self.output_dir, exist_ok=True)
+        self.output_path = os.path.join(self.output_dir,self.output_filename) or f"./{self.output_filename}"
+
+
+    def fetch(self, force=False):
+        """Download dataset except if file is already existent (can be bypass with force=True)."""
+        
+        logging.info(f"Output path : {self.output_path}")
+        
+        if not force and os.path.exists(self.output_path):
+            logging.info(f"✅ {self.output_path} already existent, ignore download.")
+            return
+
+        logging.info(f"⏬ Downloading {output_path} ...")
+        copernicusmarine.subset(
+            dataset_id=self.dataset_id,
+            variables=self.variables,
+            minimum_longitude=self.minimum_longitude,
+            maximum_longitude=self.maximum_longitude,
+            minimum_latitude=self.minimum_latitude,
+            maximum_latitude=self.maximum_latitude,
+            start_datetime=self.start_datetime,
+            end_datetime=self.end_datetime,
+            output_filename=self.output_path,
+        )
+        logging.info("✅ Download succesful.")
 
 
 def get_copdataset(request):
@@ -47,28 +96,11 @@ def get_copdataset(request):
 
     Returns ds : dataset from .netcdf output. 
     '''
-    # Output filename in data directory :
-    output_dir = os.path.join(project_root, "data", "copernicus", request.dataset_id)
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir,request.output_filename)
-    logging.info(f"Output path : {output_path}")
+    
+    request.fetch() #Download the data
 
-    # Download dataset :
-    if not os.path.exists(output_path):
-        logging.info("Downloading file...")
-        copernicusmarine.subset(dataset_id=request.dataset_id,
-        variables=request.variables,
-        minimum_latitude=request.minimum_latitude,
-        maximum_latitude=request.maximum_latitude,
-        minimum_longitude=-request.minimum_longitude,
-        maximum_longitude=request.maximum_longitude,
-        start_datetime=request.start_datetime,
-        end_datetime=request.end_datetime,
-        output_filename=output_path)    
-    else:
-        logging.info("File already downoaded. Ignore download.")
-
-    ds = xr.open_dataset(output_path)
+    ds = xr.open_dataset(request.output_path) # Open the downloaded .netcdf file
+    logging.info(print(ds))
 
     return ds
 

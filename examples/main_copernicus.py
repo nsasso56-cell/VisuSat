@@ -38,8 +38,6 @@ REGISTRY_PATH = Path(
     )
 )
 
-
-
 request = copernicus.CopernicusRequest(
     dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
     variables=["sla", "err_sla", "flag_ice"],
@@ -53,7 +51,6 @@ request = copernicus.CopernicusRequest(
 )
 
 ds = copernicus.get_copdataset(request)
-print(ds)
 
 
 
