@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
 
 import cartopy.crs as ccrs
@@ -49,7 +48,7 @@ def download_data(
     id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
     with open(id_file) as f:
         d = json.load(f)
-        #print(d)
+        # print(d)
     consumer_key = d["consumer"]
     consumer_secret = d["secret"]
     token = eumdac.AccessToken((consumer_key, consumer_secret))
@@ -229,9 +228,7 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
             ax[i].set_extent(box)
 
     fig.subplots_adjust(wspace=0.2)
-    fig.suptitle(
-        product.description + "\n" + t_start + "  -  " + t_end
-    )
+    fig.suptitle(product.description + "\n" + t_start + "  -  " + t_end)
 
     if savefig:
         fig.tight_layout()

@@ -1,20 +1,10 @@
 import logging
 import os
 import sys
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
 from src import copernicus
-import matplotlib
-import matplotlib.pyplot as plt
-
-from src import utils
-
 
 
 # Basic Logging configuration

@@ -25,5 +25,5 @@ def isodate(date):
 
 
 def str_replace(str):
-    new_str = str.replace('%', '\%')
+    new_str = str.replace("%", "\%")
     return new_str
