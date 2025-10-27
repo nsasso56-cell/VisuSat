@@ -55,6 +55,8 @@ class CopernicusRequest:
         maximum_latitude: float,
         minimum_longitude: float,
         maximum_longitude: float,
+        minimum_depth: Optional[float] = None,
+        maximum_depth: Optional[float] = None,
         output_filename: Optional[str] = None,
         output_dir: Optional[str] = None,
         extra_params: Optional[Dict[str, str]] = None,
@@ -67,6 +69,8 @@ class CopernicusRequest:
         self.maximum_latitude = maximum_latitude
         self.minimum_longitude = minimum_longitude
         self.maximum_longitude = maximum_longitude
+        self.minimum_depth = minimum_depth or None
+        self.maximum_depth = maximum_depth or None
         self.output_filename = output_filename or "output.nc"
         self.output_dir = output_dir or os.path.join(
             project_root, "data", "copernicus", self.dataset_id
@@ -97,6 +101,8 @@ class CopernicusRequest:
             maximum_longitude=self.maximum_longitude,
             minimum_latitude=self.minimum_latitude,
             maximum_latitude=self.maximum_latitude,
+            minimum_depth=self.minimum_depth,
+            maximum_depth=self.maximum_depth,
             start_datetime=self.start_datetime,
             end_datetime=self.end_datetime,
             output_filename=self.output_path,
