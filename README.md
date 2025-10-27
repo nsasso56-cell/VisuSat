@@ -2,10 +2,18 @@
 
 Python project dedicated to satellite data visualisation, handling and statistics.
 
+
+## 🌍 Examples of vizualisations :
+
+### 🌦️ EUMETSAT Data Store 
 AMVs derived from FCI-2 imagery :
 
 ![Example of AMVs vizualisation](outputs/examples/example_AMVs_FCI2.png)
 ![Zoom over Northern Atlantic](outputs/examples/zoom_exampleAMVs_FCI2.png)
+
+### 🌊 Copernicus Marine Service
+
+![Example of Sea Level Anomaly](outputs/examples/example_Copernicus_allsatellitesGlobalOceanGridded_ssh_%20sealevelanomaly.png)
 
 ## 🚀 Installation :
 
