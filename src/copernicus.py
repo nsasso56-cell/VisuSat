@@ -1,15 +1,32 @@
 import os, sys
 import cdsapi
+import pandas as pd
+import numpy as np
 import copernicusmarine
 import xarray as xr
 import logging
+import matplotlib
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 from typing import List, Optional, Dict
 from pathlib import Path
+from src import utils
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+matplotlib.rcParams["figure.dpi"] = 200
+matplotlib.rcParams.update(
+    {"text.usetex": True, "font.family": "serif", "font.size": 10}
+)
 
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(
     os.path.join(project_root, "data")
+    )
+OUT_DIR = DATA_DIR = Path(
+    os.path.join(project_root, "outputs", "copernicus")
     )
 
 
@@ -74,7 +91,7 @@ class CopernicusRequest:
             logging.info(f"✅ {self.output_path} already existent, ignore download.")
             return
 
-        logging.info(f"⏬ Downloading {output_path} ...")
+        logging.info(f"⏬ Downloading {self.output_path} ...")
         copernicusmarine.subset(
             dataset_id=self.dataset_id,
             variables=self.variables,
@@ -100,9 +117,65 @@ def get_copdataset(request):
     request.fetch() #Download the data
 
     ds = xr.open_dataset(request.output_path) # Open the downloaded .netcdf file
-    logging.info(print(ds))
+    logging.info(ds)
 
     return ds
+
+
+def plot_copdataset(ds):
+    
+    figdir = os.path.join(OUT_DIR)
+    os.makedirs(figdir, exist_ok=True)
+
+    for variable in list(ds):
+
+        
+        lon = ds[variable].longitude.values
+        lat = ds[variable].latitude.values
+        val = ds[variable].squeeze().values
+        longname = utils.str_replace(ds[variable].long_name)
+        #units = ds[variable].units
+        t = ds[variable].time.values[0]
+        isotime = pd.Timestamp(t).isoformat()
+
+        logging.info(f'Plot {longname} at {isotime}.')
+
+        lon2d, lat2d = np.meshgrid(lon, lat)
+
+        # Initiate figure
+        proj = ccrs.PlateCarree()
+        fig = plt.figure(figsize=(12, 6))
+        ax = plt.axes(projection=proj)
+        ax.set_global()
+
+        im = ax.pcolormesh(lon, lat, val, transform=proj, cmap="Spectral_r", shading="auto")
+        # Cosmetics :
+        ax.coastlines(resolution="110m", linewidth=1)
+        ax.add_feature(cfeature.BORDERS, linewidth=0.4)
+        gl = ax.gridlines(draw_labels=True, linewidth=1, color='lightgray', linestyle='--')
+        gl.top_labels = False
+        gl.right_labels = False
+
+        # Colorbar
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
+        cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
+        if hasattr(ds[variable], "units"):
+            cbar.set_label(f"{longname} ({ds[variable].units})")
+        else:
+            cbar.set_label(f'{longname}')
+
+        plt.suptitle(f"{ds.title}.\n{longname} - {isotime}")
+
+        # Savefig
+        savename = ds[variable].standard_name + '_' + isotime
+        savepath = os.path.join(figdir, savename + '.png')
+        fig.tight_layout()
+        fig.savefig(savepath, format = 'png', dpi=300, bbox_inches = 'tight')
+        logging.info(f'Successfully saved in {savepath}')
+        plt.close()
+        #plt.show()
+
 
 
 
@@ -110,3 +183,4 @@ def get_cdsdataset(dataset,request):
     client = cdsapi.Client()
     ds = client.retrieve(dataset, request).download()
     return ds
+

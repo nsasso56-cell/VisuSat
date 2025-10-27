@@ -22,3 +22,8 @@ def isodate(date):
     dt = datetime.strptime(date, "%Y%m%d%H%M%S")
     iso_date = dt.isoformat()
     return iso_date
+
+
+def str_replace(str):
+    new_str = str.replace('%', '\%')
+    return new_str

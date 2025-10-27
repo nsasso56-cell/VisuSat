@@ -1,13 +1,21 @@
 import logging
 import os
 import sys
-import xarray as xr
-import cartopy
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
 from src import copernicus
+import matplotlib
 import matplotlib.pyplot as plt
+
+from src import utils
+
+
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
@@ -52,7 +60,7 @@ request = copernicus.CopernicusRequest(
 
 ds = copernicus.get_copdataset(request)
 
-
+copernicus.plot_copdataset(ds)
 
 
 sys.exit()
@@ -75,5 +83,8 @@ request = {
 
 # Download dataset
 ds = copernicus.get_dataset(dataset,request)
+
+
+
 
 logger.info("End program.")
