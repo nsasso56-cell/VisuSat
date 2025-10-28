@@ -1,11 +1,19 @@
 import logging
 import os
+import numpy as np
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
 from src import copernicus
+from src import utils
+import pandas as pd
 
+import matplotlib
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
@@ -64,8 +72,9 @@ request = copernicus.CopernicusRequest(
 
 ds = copernicus.get_copdataset(request)
 
-copernicus.plot_copdataset(ds)
-
+#copernicus.plot_copdataset(request,ds)
+copernicus.plot_currents(request, ds, vectors = False)
+copernicus.plot_currents(request, ds, domain = [-100,-60,0,30], vectors = True)
 
 sys.exit()
 
@@ -87,7 +96,6 @@ request = {
 
 # Download dataset
 ds = copernicus.get_dataset(dataset,request)
-
 
 
 

@@ -126,9 +126,9 @@ def get_copdataset(request):
     return ds
 
 
-def plot_copdataset(ds):
+def plot_copdataset(request,ds):
 
-    figdir = os.path.join(OUT_DIR)
+    figdir = os.path.join(OUT_DIR,request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
     for variable in list(ds):
@@ -182,6 +182,80 @@ def plot_copdataset(ds):
         logging.info(f"Successfully saved in {savepath}")
         plt.close()
         # plt.show()
+
+
+
+def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
+
+    figdir = os.path.join(OUT_DIR,request.dataset_id)
+    os.makedirs(figdir, exist_ok=True)
+
+    suffix=''
+
+    # Check velocity variables
+    try:
+        u_var, v_var = utils.check_velocity_cop(ds)
+        u = ds[u_var].squeeze().values
+        v = ds[v_var].squeeze().values
+    except KeyError as e:
+        logging.error("Error:", e)
+
+    current_speed = np.sqrt(u**2 + v**2)
+    t = ds[u_var].time.values[0]
+    isotime = pd.Timestamp(t).isoformat()
+    lon = ds[u_var].longitude.values
+    lat = ds[u_var].latitude.values
+
+    # Beginning of plot
+    proj = ccrs.PlateCarree()
+    fig = plt.figure(figsize=(12, 6))
+    ax = plt.axes(projection=proj)
+    ax.set_global()
+
+    im = ax.pcolormesh(
+                lon, lat, current_speed, transform=proj, cmap="Spectral_r", shading="auto"
+            )
+    if vectors:
+        suffix = suffix + '_wvectors'
+        step = 6
+        plt.quiver(
+            lon[::step], lat[::step],
+            u[::step, ::step], v[::step, ::step],
+            scale=25, color="black", width=0.002, alpha = 0.7
+        )
+    # Cosmetics :
+    ax.coastlines(resolution="110m", linewidth=0.6)
+    ax.add_feature(cfeature.BORDERS, linewidth=0.4)
+    gl = ax.gridlines(
+        draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
+    )
+    gl.top_labels = False
+    gl.right_labels = False
+
+    # Colorbar
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
+    cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
+    cbar.set_label(r"Ocean surface velocity (m.s$^{-1}$)")
+
+    plt.suptitle(f'{isotime}')
+    if domain is not None:
+        suffix = suffix + "_subdomain"
+        ax.set_extent(domain)
+    else : 
+        suffix = suffix + "_earth"
+
+    # Savefig
+    savename = "surfacecurrents_" + isotime + suffix
+    savepath = os.path.join(figdir, savename + ".png")
+    fig.tight_layout()
+    fig.savefig(savepath, format="png", dpi=300, bbox_inches="tight")
+    logging.info(f"Successfully saved in {savepath}")
+    plt.close()
+
+    plt.show
+
+
 
 
 def get_cdsdataset(dataset, request):
