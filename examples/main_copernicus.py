@@ -64,13 +64,13 @@ request = copernicus.CopernicusRequest(
   minimum_latitude=-80,
   maximum_latitude=90,
   start_datetime="2025-10-27T12:00:00",
-  end_datetime="2025-10-27T12:00:00",
+  end_datetime="2025-10-27T15:00:00",
   minimum_depth=0.49402499198913574,
   maximum_depth=0.49402499198913574,
 )
 
 
-ds = copernicus.get_copdataset(request)
+ds = copernicus.get_copdataset(request, force = True)
 
 #copernicus.plot_copdataset(request,ds)
 copernicus.plot_currents(request, ds, vectors = False)
