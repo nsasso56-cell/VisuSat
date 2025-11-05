@@ -80,29 +80,40 @@ ds = copernicus.get_copdataset(request, force=False)
 proj = ccrs.PlateCarree()
 cmap = "jet"
 # Compute gradient of SLA field :
-gradient_lon = np.diff(ds.sla.squeeze(), axis=1)
-gradient_lat = np.diff(ds.sla.squeeze(), axis=0)
 lon = ds.sla.longitude
 lat = ds.sla.latitude
+LON, LAT = np.meshgrid(lon,lat)
+dsla_dlat, dsla_dlon = np.gradient(ds.sla.squeeze(),np.diff(lat)[0],np.diff(lon)[0])
+
+grad = np.sqrt(dsla_dlon**2 + dsla_dlat**2)
 
 # Display gradients global field :
 copernicus.plot_field(
     lon,
     lat,
-    gradient_lat,
-    cbar_label="(m)",
-    title="Diff of Sea Level Altitude as a function of Latitude",
+    dsla_dlat,
+    cbar_label="(m/$^{\circ}$)",
+    cmap = cmap,
+    title="Gradient of Sea Level Altitude as a function of Latitude",
     proj=proj,
 )
 copernicus.plot_field(
     lon,
     lat,
-    gradient_lon,
+    dsla_dlon,
     cmap=cmap,
-    cbar_label="(m)",
-    title="Diff of Sea Level Altitude as a function of Longitude",
+    cbar_label="(m/$^{\circ}$)",
+    title="Gradient of Sea Level Altitude as a function of Longitude",
 )
 
+copernicus.plot_field(
+    lon,
+    lat,
+    grad,
+    cmap=cmap,
+    cbar_label="(m/$^{\circ}$)",
+    title="Gradient of Sea Level Anomaly",
+)
 
 # Plot fields from copernicus dataset request :
 copernicus.plot_copdataset(request, ds)
