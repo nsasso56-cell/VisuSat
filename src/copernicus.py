@@ -28,21 +28,21 @@ OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 
 class CopernicusRequest:
     """
-        Copernicus request class is used to define a proper request to be proposed to Copernicus Data Store.
+    Copernicus request class is used to define a proper request to be proposed to Copernicus Data Store.
 
-        Example of use :
-        request = copernicus.CopernicusRequest(
-        dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
-        variables=["sla", "err_sla", "flag_ice"],
-        minimum_longitude=1,
-        maximum_longitude=359,
-        minimum_latitude=-71.81717698546082,
-        maximum_latitude=82.52141057014119,
-        start_datetime="2025-10-22T00:00:00",
-        end_datetime="2025-10-22T00:00:00",
-        output_filename="globaloceanidentifier_oct2025.nc"
+    Example of use :
+    request = copernicus.CopernicusRequest(
+    dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
+    variables=["sla", "err_sla", "flag_ice"],
+    minimum_longitude=1,
+    maximum_longitude=359,
+    minimum_latitude=-71.81717698546082,
+    maximum_latitude=82.52141057014119,
+    start_datetime="2025-10-22T00:00:00",
+    end_datetime="2025-10-22T00:00:00",
+    output_filename="globaloceanidentifier_oct2025.nc"
 
-        CopernicusRequest.fetch() to download the data from Copernicus data store following request.
+    CopernicusRequest.fetch() to download the data from Copernicus data store following request.
     """
 
     def __init__(
@@ -127,9 +127,9 @@ def get_copdataset(request, force=False):
     return ds
 
 
-def plot_copdataset(request,ds):
+def plot_copdataset(request, ds):
 
-    figdir = os.path.join(OUT_DIR,request.dataset_id)
+    figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
     for variable in list(ds):
@@ -184,21 +184,26 @@ def plot_copdataset(request,ds):
         plt.close()
         # plt.show()
 
-def plot_field(lon, lat, val, title = '', cmap="Spectral_r", cbar_label ='unknown', proj=ccrs.PlateCarree()):
-     # Initiate figure
+
+def plot_field(
+    lon,
+    lat,
+    val,
+    title="",
+    cmap="Spectral_r",
+    cbar_label="unknown",
+    proj=ccrs.PlateCarree(),
+):
+    # Initiate figure
     fig = plt.figure(figsize=(12, 6))
     ax = plt.axes(projection=proj)
     ax.set_global()
-    im = ax.pcolormesh(
-            lon, lat, val, transform=proj, cmap=cmap, shading="auto"
-        )
+    im = ax.pcolormesh(lon, lat, val, transform=proj, cmap=cmap, shading="auto")
 
     # Cosmetics :
     ax.coastlines(resolution="110m", linewidth=0.6)
     ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-    gl = ax.gridlines(
-        draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
-    )
+    gl = ax.gridlines(draw_labels=True, linewidth=1, color="lightgray", linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
 
@@ -210,26 +215,24 @@ def plot_field(lon, lat, val, title = '', cmap="Spectral_r", cbar_label ='unknow
 
     fig.suptitle(title)
     fig.tight_layout()
-    
+
     return fig, ax
 
-    
 
+def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
 
-def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
-
-    figdir = os.path.join(OUT_DIR,request.dataset_id)
+    figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
     for i in range(len(ds.time)):
         for j in range(len(ds.depth)):
-    
-            suffix = ''
+
+            suffix = ""
             # Check velocity variables
             try:
                 u_var, v_var = utils.check_velocity_cop(ds)
-                u = ds[u_var][i,j,:,:].values
-                v = ds[v_var][i,j,:,:].values
+                u = ds[u_var][i, j, :, :].values
+                v = ds[v_var][i, j, :, :].values
             except KeyError as e:
                 logging.error("Error:", e)
 
@@ -247,15 +250,25 @@ def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
             ax.set_global()
 
             im = ax.pcolormesh(
-                        lon, lat, current_speed, transform=proj, cmap="Spectral_r", shading="auto"
-                    )
+                lon,
+                lat,
+                current_speed,
+                transform=proj,
+                cmap="Spectral_r",
+                shading="auto",
+            )
             if vectors:
-                suffix = suffix + '_wvectors'
+                suffix = suffix + "_wvectors"
                 step = 6
                 plt.quiver(
-                    lon[::step], lat[::step],
-                    u[::step, ::step], v[::step, ::step],
-                    scale=25, color="black", width=0.002, alpha = 0.7
+                    lon[::step],
+                    lat[::step],
+                    u[::step, ::step],
+                    v[::step, ::step],
+                    scale=25,
+                    color="black",
+                    width=0.002,
+                    alpha=0.7,
                 )
             # Cosmetics :
             ax.coastlines(resolution="110m", linewidth=0.6)
@@ -268,19 +281,21 @@ def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
 
             # Colorbar
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
+            cax = divider.append_axes(
+                "bottom", size="2.5%", pad=0.3, axes_class=plt.Axes
+            )
             cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
             cbar.set_label(r"Ocean surface velocity (m.s$^{-1}$)")
 
-            plt.suptitle(f'{isotime}')
+            plt.suptitle(f"{isotime}")
             if domain is not None:
                 suffix = suffix + "_subdomain"
                 ax.set_extent(domain)
-            else : 
+            else:
                 suffix = suffix + "_earth"
 
             # Savefig
-            savename = "surfacecurrents_" + isotime + f'_depth{depth}' + suffix
+            savename = "surfacecurrents_" + isotime + f"_depth{depth}" + suffix
             savepath = os.path.join(figdir, savename + ".png")
             fig.tight_layout()
             fig.savefig(savepath, format="png", dpi=300, bbox_inches="tight")

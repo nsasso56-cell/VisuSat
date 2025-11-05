@@ -45,19 +45,18 @@ REGISTRY_PATH = Path(
 )
 
 
-
 request = copernicus.CopernicusRequest(
     dataset_id="cmems_mod_glo_phy_anfc_0.083deg_PT1H-m",
-  variables=["so", "thetao", "uo", "vo", "zos"],
-  minimum_longitude=-180,
-  maximum_longitude=179.91668701171875,
-  minimum_latitude=-80,
-  maximum_latitude=90,
-  start_datetime="2025-10-27T12:00:00",
-  end_datetime="2025-10-27T15:00:00",
-  minimum_depth=0.49402499198913574,
-  maximum_depth=0.49402499198913574,
-  output_filename="output_(1).nc"
+    variables=["so", "thetao", "uo", "vo", "zos"],
+    minimum_longitude=-180,
+    maximum_longitude=179.91668701171875,
+    minimum_latitude=-80,
+    maximum_latitude=90,
+    start_datetime="2025-10-27T12:00:00",
+    end_datetime="2025-10-27T15:00:00",
+    minimum_depth=0.49402499198913574,
+    maximum_depth=0.49402499198913574,
+    output_filename="output_(1).nc",
 )
 
 
@@ -70,16 +69,16 @@ request = copernicus.CopernicusRequest(
     maximum_latitude=82.52141057014119,
     start_datetime="2025-10-22T00:00:00",
     end_datetime="2025-10-22T00:00:00",
-    output_filename="globaloceanidentifier_oct2025.nc"
+    output_filename="globaloceanidentifier_oct2025.nc",
 )
 
-ds = copernicus.get_copdataset(request, force = False)
+ds = copernicus.get_copdataset(request, force=False)
 
 
 # Gradient de Sea Level Altitude: identifier les zones à forts gradients (instables, forte houle potentielle)
 # Setup projection and colormap :
 proj = ccrs.PlateCarree()
-cmap = 'jet'
+cmap = "jet"
 # Compute gradient of SLA field :
 gradient_lon = np.diff(ds.sla.squeeze(), axis=1)
 gradient_lat = np.diff(ds.sla.squeeze(), axis=0)
@@ -87,20 +86,29 @@ lon = ds.sla.longitude
 lat = ds.sla.latitude
 
 # Display gradients global field :
-copernicus.plot_field(lon, lat, gradient_lat,
-                    cbar_label="(m)",
-                    title ='Diff of Sea Level Altitude as a function of Latitude', proj=proj)
-copernicus.plot_field(lon, lat, gradient_lon,
-                    cmap=cmap,
-                    cbar_label="(m)",
-                    title='Diff of Sea Level Altitude as a function of Longitude')
+copernicus.plot_field(
+    lon,
+    lat,
+    gradient_lat,
+    cbar_label="(m)",
+    title="Diff of Sea Level Altitude as a function of Latitude",
+    proj=proj,
+)
+copernicus.plot_field(
+    lon,
+    lat,
+    gradient_lon,
+    cmap=cmap,
+    cbar_label="(m)",
+    title="Diff of Sea Level Altitude as a function of Longitude",
+)
 
 
 # Plot fields from copernicus dataset request :
-copernicus.plot_copdataset(request,ds)
+copernicus.plot_copdataset(request, ds)
 
-#copernicus.plot_currents(request, ds, vectors = False)
-#copernicus.plot_currents(request, ds, domain = [-100,-60,0,30], vectors = True)
+# copernicus.plot_currents(request, ds, vectors = False)
+# copernicus.plot_currents(request, ds, domain = [-100,-60,0,30], vectors = True)
 
 sys.exit()
 
@@ -117,14 +125,11 @@ request = {
     "rcm_model": "cnrm_aladin63",
     "ensemble_member": "r1i1p1",
     "start_year": ["2026"],
-    "end_year": ["2030"]
+    "end_year": ["2030"],
 }
 
 # Download dataset
-ds = copernicus.get_dataset(dataset,request)
-
-
-
+ds = copernicus.get_dataset(dataset, request)
 
 
 logger.info("End program.")
