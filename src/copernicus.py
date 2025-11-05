@@ -184,6 +184,36 @@ def plot_copdataset(request,ds):
         plt.close()
         # plt.show()
 
+def plot_field(lon, lat, val, title = '', cmap="Spectral_r", cbar_label ='unknown', proj=ccrs.PlateCarree()):
+     # Initiate figure
+    fig = plt.figure(figsize=(12, 6))
+    ax = plt.axes(projection=proj)
+    ax.set_global()
+    im = ax.pcolormesh(
+            lon, lat, val, transform=proj, cmap=cmap, shading="auto"
+        )
+
+    # Cosmetics :
+    ax.coastlines(resolution="110m", linewidth=0.6)
+    ax.add_feature(cfeature.BORDERS, linewidth=0.4)
+    gl = ax.gridlines(
+        draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
+    )
+    gl.top_labels = False
+    gl.right_labels = False
+
+    # Colorbar
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
+    cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
+    cbar.set_label(cbar_label)
+
+    fig.suptitle(title)
+    fig.tight_layout()
+    
+    return fig, ax
+
+    
 
 
 def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
@@ -192,67 +222,70 @@ def plot_currents(request, ds: xr.Dataset, domain = None, vectors = False):
     os.makedirs(figdir, exist_ok=True)
 
     for i in range(len(ds.time)):
-        suffix = ''
-        # Check velocity variables
-        try:
-            u_var, v_var = utils.check_velocity_cop(ds)
-            u = ds[u_var].squeeze()[i,:,:].values
-            v = ds[v_var].squeeze()[i,:,:].values
-        except KeyError as e:
-            logging.error("Error:", e)
+        for j in range(len(ds.depth)):
+    
+            suffix = ''
+            # Check velocity variables
+            try:
+                u_var, v_var = utils.check_velocity_cop(ds)
+                u = ds[u_var][i,j,:,:].values
+                v = ds[v_var][i,j,:,:].values
+            except KeyError as e:
+                logging.error("Error:", e)
 
-        current_speed = np.sqrt(u**2 + v**2)
-        t = ds[u_var].time.values[i]
-        isotime = pd.Timestamp(t).isoformat()
-        lon = ds[u_var].longitude.values
-        lat = ds[u_var].latitude.values
+            current_speed = np.sqrt(u**2 + v**2)
+            depth = ds[u_var].depth.values[j]
+            t = ds[u_var].time.values[i]
+            isotime = pd.Timestamp(t).isoformat()
+            lon = ds[u_var].longitude.values
+            lat = ds[u_var].latitude.values
 
-        # Beginning of plot
-        proj = ccrs.PlateCarree()
-        fig = plt.figure(figsize=(12, 6))
-        ax = plt.axes(projection=proj)
-        ax.set_global()
+            # Beginning of plot
+            proj = ccrs.PlateCarree()
+            fig = plt.figure(figsize=(12, 6))
+            ax = plt.axes(projection=proj)
+            ax.set_global()
 
-        im = ax.pcolormesh(
-                    lon, lat, current_speed, transform=proj, cmap="Spectral_r", shading="auto"
+            im = ax.pcolormesh(
+                        lon, lat, current_speed, transform=proj, cmap="Spectral_r", shading="auto"
+                    )
+            if vectors:
+                suffix = suffix + '_wvectors'
+                step = 6
+                plt.quiver(
+                    lon[::step], lat[::step],
+                    u[::step, ::step], v[::step, ::step],
+                    scale=25, color="black", width=0.002, alpha = 0.7
                 )
-        if vectors:
-            suffix = suffix + '_wvectors'
-            step = 6
-            plt.quiver(
-                lon[::step], lat[::step],
-                u[::step, ::step], v[::step, ::step],
-                scale=25, color="black", width=0.002, alpha = 0.7
+            # Cosmetics :
+            ax.coastlines(resolution="110m", linewidth=0.6)
+            ax.add_feature(cfeature.BORDERS, linewidth=0.4)
+            gl = ax.gridlines(
+                draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
             )
-        # Cosmetics :
-        ax.coastlines(resolution="110m", linewidth=0.6)
-        ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-        gl = ax.gridlines(
-            draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
-        )
-        gl.top_labels = False
-        gl.right_labels = False
+            gl.top_labels = False
+            gl.right_labels = False
 
-        # Colorbar
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
-        cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
-        cbar.set_label(r"Ocean surface velocity (m.s$^{-1}$)")
+            # Colorbar
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
+            cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
+            cbar.set_label(r"Ocean surface velocity (m.s$^{-1}$)")
 
-        plt.suptitle(f'{isotime}')
-        if domain is not None:
-            suffix = suffix + "_subdomain"
-            ax.set_extent(domain)
-        else : 
-            suffix = suffix + "_earth"
+            plt.suptitle(f'{isotime}')
+            if domain is not None:
+                suffix = suffix + "_subdomain"
+                ax.set_extent(domain)
+            else : 
+                suffix = suffix + "_earth"
 
-        # Savefig
-        savename = "surfacecurrents_" + isotime + suffix
-        savepath = os.path.join(figdir, savename + ".png")
-        fig.tight_layout()
-        fig.savefig(savepath, format="png", dpi=300, bbox_inches="tight")
-        logging.info(f"Successfully saved in {savepath}")
-        plt.close()
+            # Savefig
+            savename = "surfacecurrents_" + isotime + f'_depth{depth}' + suffix
+            savepath = os.path.join(figdir, savename + ".png")
+            fig.tight_layout()
+            fig.savefig(savepath, format="png", dpi=300, bbox_inches="tight")
+            logging.info(f"Successfully saved in {savepath}")
+            plt.close()
 
 
 def get_cdsdataset(dataset, request):

@@ -30,11 +30,11 @@ logger = logging.getLogger(Path(__file__).stem)
 
 logger.info("Program launched.")
 
-start_time = datetime.utcnow() - timedelta(hours=6)
-end_time = datetime.utcnow() - timedelta(hours=2)
+start_time = datetime(year = 2025, month=11, day=3, hour=11, minute=0, second=0) 
+end_time = datetime(year = 2025, month=11, day=3, hour=12, minute=0, second=0)
 
 # Collection required :
-required_collection = "EO:EUM:DAT:0676"  # Registry in data/EUMETSAT_products_registry
+required_collection = "EO:EUM:DAT:0665"  # Registry in data/EUMETSAT_products_registry
 # Load EUMETSAT products registry :
 load_registry()
 product = PRODUCTS[required_collection]
@@ -46,7 +46,10 @@ output_files = eumetsat.download_data(
 ds = xr.open_dataset(output_files[0])
 
 
+
+
 for file in output_files:
+
     eumetsat.plot_amvs(file, product, display=False)
 
     eumetsat.plot_amvs(file, product, box = [-40,20,20,80], display=False)

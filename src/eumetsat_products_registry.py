@@ -58,10 +58,10 @@ def register_product(product: Product):
 
 register_product(
     Product(
-        collection_id="EO:EUM:DAT:0682",
-        name="Active Fire Monitoring",
-        level="L2",
-        n_categories=3,
-        description="Active Fire Monitoring derived from FCI channel IR-3.8",
+        collection_id="EO:EUM:DAT:0665",
+        name="MTG-FCI High Resolution image - 0degree",
+        level="L1c",
+        n_categories=4,
+        description="FCI Level 1c High Resolution Image Data - MTG - 0 degree",
     )
 )
