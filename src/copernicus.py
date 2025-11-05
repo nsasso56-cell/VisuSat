@@ -193,7 +193,10 @@ def plot_field(
     cmap="Spectral_r",
     cbar_label="unknown",
     proj=ccrs.PlateCarree(),
+    savepath = None,
+    saveformat = 'png'
 ):
+    logger.info(f"Plot figure with field {title}.")
     # Initiate figure
     fig = plt.figure(figsize=(12, 6))
     ax = plt.axes(projection=proj)
@@ -215,6 +218,10 @@ def plot_field(
 
     fig.suptitle(title)
     fig.tight_layout()
+
+    if savepath is not None:
+        fig.savefig(savepath, format=saveformat, dpi=300, bbox_inches="tight")
+        logger.info("Figure saved in {save_path}.")
 
     return fig, ax
 
