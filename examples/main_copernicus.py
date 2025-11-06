@@ -77,7 +77,7 @@ ds = copernicus.get_copdataset(request, force=False)
 
 # Gradient de Sea Level Altitude: identifier les zones à forts gradients (instables, forte houle potentielle)
 # Setup projection and colormap :
-proj = ccrs.PlateCarree()
+proj = ccrs.Mollweide()
 cmap = "jet"
 # Compute gradient of SLA field :
 lon = ds.sla.longitude
@@ -105,14 +105,17 @@ copernicus.plot_field(
     cbar_label="(m/$^{\circ}$)",
     title="Gradient of Sea Level Altitude as a function of Longitude",
 )
+domain = [-10, 12, 40.0, 60] 
+
 
 copernicus.plot_field(
     lon,
     lat,
     grad,
     cmap=cmap,
+    subdomain=domain,
     cbar_label="(m/$^{\circ}$)",
-    title="Gradient of Sea Level Anomaly",
+    title="Gradient norm of Sea Level Anomaly",
 )
 
 # Plot fields from copernicus dataset request :
