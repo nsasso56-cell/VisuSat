@@ -7,6 +7,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
 from src import eumetsat
+import eumdac
+import time
+import shutil
+import rioxarray
+import matplotlib.pyplot as plt
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
@@ -38,6 +43,80 @@ required_collection = "EO:EUM:DAT:0665"  # Registry in data/EUMETSAT_products_re
 # Load EUMETSAT products registry :
 load_registry()
 product = PRODUCTS[required_collection]
+
+
+token = eumetsat.get_token()
+# Create datatailor object with with your token
+datatailor = eumdac.DataTailor(token)
+
+datastore = eumdac.DataStore(token)
+# Select an FCI collection, eg "FCI Level 1c High Resolution Image Data - MTG - 0 degree" - "EO:EUM:DAT:0665"
+selected_collection = datastore.get_collection('EO:EUM:DAT:0665')
+ 
+# Set sensing start and end time
+start = datetime(2025, 1, 26, 19, 30)
+end = datetime(2025, 1, 26, 23, 30)
+ 
+# Retrieve latest product that matches the filter
+product = selected_collection.search(
+    dtstart=start,
+    dtend=end).first()
+
+# Define the chain configuration
+chain = eumdac.tailor_models.Chain(
+    product='FCIL1HRFI',
+    format='geotiff',
+    filter={"bands" : ["ir_38_hr_effective_radiance", "ir_38_hr_effective_radiance"]},
+    projection='geographic',
+    roi='western_europe'
+)
+
+# Send the customisation to Data Tailor Web Services
+customisation = datatailor.new_customisation(product, chain=chain)
+ 
+status = customisation.status
+sleep_time = 10 # seconds
+ 
+# Customisation loop to read current status of the customisation
+print("Starting customisation process...")
+while status:
+    # Get the status of the ongoing customisation
+    status = customisation.status
+    if "DONE" in status:
+        print(f"Customisation {customisation._id} is successfully completed.")
+        break
+    elif status in ["ERROR", "FAILED", "DELETED", "KILLED", "INACTIVE"]:
+        print(f"Customisation {customisation._id} was unsuccessful. Customisation log is printed.\n")
+        print(customisation.logfile)
+        break
+    elif "QUEUED" in status:
+        print(f"Customisation {customisation._id} is queued.")
+    elif "RUNNING" in status:
+        print(f"Customisation {customisation._id} is running.")
+    time.sleep(sleep_time)
+
+
+print("Starting download of customised products...")
+for product in customisation.outputs:
+    print(f"Downloading product: {product}")
+    with customisation.stream_output(product) as source_file, open(source_file.name, 'wb') as destination_file:
+        shutil.copyfileobj(source_file, destination_file)
+    print(f"Product {product} downloaded successfully.")
+
+# Open geotiff
+ds = rioxarray.open_rasterio(source_file.name)
+
+print(ds)
+
+img = ds.isel(band=0)
+
+# Affichage
+plt.figure(figsize=(8, 8))
+img.plot(cmap="gray")
+plt.title("Image GeoTIFF - Bande 1")
+plt.show()
+
+
 
 output_files = eumetsat.download_data(
     required_collection, start_time, end_time, last=True

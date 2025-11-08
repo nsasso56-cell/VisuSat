@@ -22,6 +22,17 @@ matplotlib.rcParams.update(
 )
 
 
+def get_token():
+    id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
+    with open(id_file) as f:
+        d = json.load(f)
+        # print(d)
+    consumer_key = d["consumer"]
+    consumer_secret = d["secret"]
+    token = eumdac.AccessToken((consumer_key, consumer_secret))
+
+    return token
+
 def download_data(
     collection_id,
     start_time,
@@ -44,14 +55,7 @@ def download_data(
 
     # EUMETSAT authentification
     logger.info("EUMETSAT authentification...")
-    project_root = Path(__file__).resolve().parent.parent
-    id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
-    with open(id_file) as f:
-        d = json.load(f)
-        # print(d)
-    consumer_key = d["consumer"]
-    consumer_secret = d["secret"]
-    token = eumdac.AccessToken((consumer_key, consumer_secret))
+    token = get_token()
     datastore = eumdac.DataStore(token)
     logger.info("Athentification succeed.")
 
@@ -74,29 +78,34 @@ def download_data(
 
     for product in products:
         logger.info(f"Product : {product}")
-        target_dir = os.path.join(project_root, "data", collection_id)
+        target_dir = os.path.join(project_root, "data", collection_id, product._id)
         os.makedirs(target_dir, exist_ok=True)
 
         for entry in product.entries:
             if entry.endswith(".nc"):
                 logger.info(f"Download of NetCDF : {entry}")
-                target_file = os.path.join(target_dir, entry)
-                outfiles.append(target_file)
+            elif entry.endswith(".jpg"):
+                logger.info(f"Download of .jpg image : {entry}")
 
-                if output_file is not None:
-                    if len(products) > 1:
-                        logger.info(
-                            "output_file is specified but products are mutliple : Conflict, return to default configuration."
-                        )
-                    else:
-                        target_file = output_file
+            # Set target file path
+            target_file = os.path.join(target_dir, entry)
+            outfiles.append(target_file)
 
-                if not os.path.exists(target_file):
-                    with product.open(entry) as fsrc, open(target_file, "wb") as fdst:
-                        fdst.write(fsrc.read())
-                    logger.info(f"→ File saved : {target_file}")
+            if output_file is not None:
+                if len(products) > 1:
+                    logger.info(
+                        "output_file is specified but products are mutliple : Conflict, return to default configuration."
+                    )
                 else:
-                    logger.info(f"Target file already existent : {target_file}")
+                    target_file = output_file
+
+            if not os.path.exists(target_file):
+                os.makedirs(os.path.dirname(target_file), exist_ok=True)
+                with product.open(entry) as fsrc, open(target_file, "wb") as fdst:
+                    fdst.write(fsrc.read())
+                logger.info(f"→ File saved : {target_file}")
+            else:
+                logger.info(f"Target file already existent : {target_file}")
 
     return outfiles
 
