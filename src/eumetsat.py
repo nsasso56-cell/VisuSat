@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import time
+import shutil
 from pathlib import Path
 
 import cartopy.crs as ccrs
@@ -108,6 +110,48 @@ def download_data(
                 logger.info(f"Target file already existent : {target_file}")
 
     return outfiles
+
+
+def customisation(product, chain):
+
+    token = get_token()
+    # Create datatailor object with your token
+    datatailor = eumdac.DataTailor(token)
+
+    # Send the customisation to Data Tailor Web Services
+    customisation = datatailor.new_customisation(product, chain=chain)
+    
+    status = customisation.status
+    sleep_time = 10 # seconds
+    
+    # Customisation loop to read current status of the customisation
+    logger.info("Starting customisation process...")
+    while status:
+        # Get the status of the ongoing customisation
+        status = customisation.status
+        if "DONE" in status:
+            logger.info(f"Customisation {customisation._id} is successfully completed.")
+            break
+        elif status in ["ERROR", "FAILED", "DELETED", "KILLED", "INACTIVE"]:
+            logger.info(f"Customisation {customisation._id} was unsuccessful. Customisation log is printed.\n")
+            logger.info(customisation.logfile)
+            break
+        elif "QUEUED" in status:
+            logger.info(f"Customisation {customisation._id} is queued.")
+        elif "RUNNING" in status:
+            logger.info(f"Customisation {customisation._id} is running.")
+        time.sleep(sleep_time)
+
+
+    logger.info("Starting download of customised products...")
+    for product in customisation.outputs:
+        logger.info(f"Downloading product: {product}")
+        with customisation.stream_output(product) as source_file, open(source_file.name, 'wb') as destination_file:
+            shutil.copyfileobj(source_file, destination_file)
+        logger.info(f"Product {product} downloaded successfully.")
+
+    return source_file.name, customisation
+
 
 
 def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=False):

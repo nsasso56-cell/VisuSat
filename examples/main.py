@@ -8,8 +8,6 @@ from pathlib import Path
 from src.eumetsat_products_registry import *
 from src import eumetsat
 import eumdac
-import time
-import shutil
 import rioxarray
 import matplotlib.pyplot as plt
 
@@ -71,40 +69,10 @@ chain = eumdac.tailor_models.Chain(
     roi='western_europe'
 )
 
-# Send the customisation to Data Tailor Web Services
-customisation = datatailor.new_customisation(product, chain=chain)
- 
-status = customisation.status
-sleep_time = 10 # seconds
- 
-# Customisation loop to read current status of the customisation
-print("Starting customisation process...")
-while status:
-    # Get the status of the ongoing customisation
-    status = customisation.status
-    if "DONE" in status:
-        print(f"Customisation {customisation._id} is successfully completed.")
-        break
-    elif status in ["ERROR", "FAILED", "DELETED", "KILLED", "INACTIVE"]:
-        print(f"Customisation {customisation._id} was unsuccessful. Customisation log is printed.\n")
-        print(customisation.logfile)
-        break
-    elif "QUEUED" in status:
-        print(f"Customisation {customisation._id} is queued.")
-    elif "RUNNING" in status:
-        print(f"Customisation {customisation._id} is running.")
-    time.sleep(sleep_time)
-
-
-print("Starting download of customised products...")
-for product in customisation.outputs:
-    print(f"Downloading product: {product}")
-    with customisation.stream_output(product) as source_file, open(source_file.name, 'wb') as destination_file:
-        shutil.copyfileobj(source_file, destination_file)
-    print(f"Product {product} downloaded successfully.")
+output_file, customisation = eumetsat.customisation(product, chain)
 
 # Open geotiff
-ds = rioxarray.open_rasterio(source_file.name)
+ds = rioxarray.open_rasterio(output_file)
 
 print(ds)
 
