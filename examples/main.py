@@ -62,14 +62,13 @@ product = selected_collection.search(
 chain = eumdac.tailor_models.Chain(
     product='FCIL1HRFI',
     format='geotiff',
-    filter={"bands" : ["nir_22_hr_effective_radiance","nir_22_hr_effective_radiance"]},
+    filter={"bands" : ["ir_38_hr_effective_radiance"]},
     projection='geographic',
     roi='western_europe'
 )
 
-#output_file, customisation = eumetsat.customisation(product, chain)
-#output_file = 'FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_c289404c_FPC.tif'
-output_file = '/Users/nicolassasso/Documents/Python_projects/VisuSat/data/eumetsat/custom/EO:EUM:DAT:0665/FCIL1HRFI-FPC-a0533003/FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_a0533003_FPC.tif'
+output_file, customisation = eumetsat.customisation(product, chain)
+#output_file = '/Users/nicolassasso/Documents/Python_projects/VisuSat/data/eumetsat/custom/EO:EUM:DAT:0665/FCIL1HRFI-FPC-a0533003/FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_a0533003_FPC.tif'
 
 
 # Open geotiff
