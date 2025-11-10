@@ -1,8 +1,8 @@
 import json
 import logging
 import os
-import time
 import shutil
+import time
 from pathlib import Path
 
 import cartopy.crs as ccrs
@@ -34,6 +34,7 @@ def get_token():
     token = eumdac.AccessToken((consumer_key, consumer_secret))
 
     return token
+
 
 def download_data(
     collection_id,
@@ -114,18 +115,16 @@ def download_data(
 
 def customisation(product, chain):
 
-    
-
     token = get_token()
     # Create datatailor object with your token
     datatailor = eumdac.DataTailor(token)
 
     # Send the customisation to Data Tailor Web Services
     customisation = datatailor.new_customisation(product, chain=chain)
-    
+
     status = customisation.status
-    sleep_time = 10 # seconds
-    
+    sleep_time = 10  # seconds
+
     # Customisation loop to read current status of the customisation
     logger.info("Starting customisation process...")
     while status:
@@ -135,7 +134,9 @@ def customisation(product, chain):
             logger.info(f"Customisation {customisation._id} is successfully completed.")
             break
         elif status in ["ERROR", "FAILED", "DELETED", "KILLED", "INACTIVE"]:
-            logger.info(f"Customisation {customisation._id} was unsuccessful. Customisation log is printed.\n")
+            logger.info(
+                f"Customisation {customisation._id} was unsuccessful. Customisation log is printed.\n"
+            )
             logger.info(customisation.logfile)
             break
         elif "QUEUED" in status:
@@ -144,21 +145,24 @@ def customisation(product, chain):
             logger.info(f"Customisation {customisation._id} is running.")
         time.sleep(sleep_time)
 
-
     #
-    datadir = os.path.join(project_root, "data","eumetsat", "custom", product.collection._id)
+    datadir = os.path.join(
+        project_root, "data", "eumetsat", "custom", product.collection._id
+    )
 
     logger.info("Starting download of customised products...")
     for product in customisation.outputs:
         savepath = os.path.join(datadir, product)
         os.makedirs(os.path.dirname(savepath), exist_ok=True)
         logger.info(f"Downloading product: {product}")
-        with customisation.stream_output(product) as source_file, open(savepath, 'wb') as destination_file:
+        with (
+            customisation.stream_output(product) as source_file,
+            open(savepath, "wb") as destination_file,
+        ):
             shutil.copyfileobj(source_file, destination_file)
         logger.info(f"Product {product} downloaded successfully.")
 
     return savepath, customisation
-
 
 
 def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=False):

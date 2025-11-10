@@ -1,19 +1,12 @@
 import logging
 import os
-import numpy as np
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
-from src.eumetsat_products_registry import *
-from src import copernicus
-from src import utils
-import pandas as pd
 
-import matplotlib
-import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+from src import copernicus
+from src.eumetsat_products_registry import *
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
@@ -82,8 +75,8 @@ cmap = "jet"
 # Compute gradient of SLA field :
 lon = ds.sla.longitude
 lat = ds.sla.latitude
-LON, LAT = np.meshgrid(lon,lat)
-dsla_dlat, dsla_dlon = np.gradient(ds.sla.squeeze(),np.diff(lat)[0],np.diff(lon)[0])
+LON, LAT = np.meshgrid(lon, lat)
+dsla_dlat, dsla_dlon = np.gradient(ds.sla.squeeze(), np.diff(lat)[0], np.diff(lon)[0])
 
 grad = np.sqrt(dsla_dlon**2 + dsla_dlat**2)
 
@@ -93,7 +86,7 @@ copernicus.plot_field(
     lat,
     dsla_dlat,
     cbar_label="(m/$^{\circ}$)",
-    cmap = cmap,
+    cmap=cmap,
     title="Gradient of Sea Level Altitude as a function of Latitude",
     proj=proj,
 )
@@ -105,7 +98,7 @@ copernicus.plot_field(
     cbar_label="(m/$^{\circ}$)",
     title="Gradient of Sea Level Altitude as a function of Longitude",
 )
-domain = [-10, 12, 40.0, 60] 
+domain = [-10, 12, 40.0, 60]
 
 
 copernicus.plot_field(

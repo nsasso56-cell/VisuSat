@@ -45,7 +45,7 @@ line-length = 88
 target-version = "py310"
 select = ["E", "F", "I"]  # errors, styles, import order
 ignore = ["E501"]         # ignore too long lines. 
-fix = false               # if true, allows `ruff --fix` dto correct automatically
+fix = true               # if true, allows `ruff --fix` dto correct automatically
 
 [tool.black]
 line-length = 88

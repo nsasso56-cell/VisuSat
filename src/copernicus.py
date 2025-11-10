@@ -194,18 +194,20 @@ def plot_field(
     cmap="Spectral_r",
     cbar_label="unknown",
     proj=ccrs.PlateCarree(),
-    savepath = None,
-    saveformat = 'png'
+    savepath=None,
+    saveformat="png",
 ):
     logger.info(f"Plot figure with field {title}.")
     # Initiate figure
     fig = plt.figure(figsize=(12, 6))
     ax = plt.axes(projection=proj)
     ax.set_global()
-    im = ax.pcolormesh(lon, lat, val, transform=ccrs.PlateCarree(), cmap=cmap, shading="auto")
+    im = ax.pcolormesh(
+        lon, lat, val, transform=ccrs.PlateCarree(), cmap=cmap, shading="auto"
+    )
 
     # Cosmetics :
-    
+
     gl = ax.gridlines(draw_labels=True, linewidth=1, color="lightgray", linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
@@ -218,14 +220,17 @@ def plot_field(
 
     if subdomain is not None:
         ax.set_extent(subdomain)
-        ax.add_feature(cfeature.COASTLINE.with_scale('10m'), linewidth=0.6)
-        ax.add_feature(cfeature.BORDERS.with_scale('10m'), linewidth=0.4)
-        ax.add_feature(cfeature.LAKES.with_scale('10m'), linewidth=0.3, edgecolor='gray')
-        ax.add_feature(cfeature.RIVERS.with_scale('10m'), linewidth=0.3, edgecolor='lightblue')
+        ax.add_feature(cfeature.COASTLINE.with_scale("10m"), linewidth=0.6)
+        ax.add_feature(cfeature.BORDERS.with_scale("10m"), linewidth=0.4)
+        ax.add_feature(
+            cfeature.LAKES.with_scale("10m"), linewidth=0.3, edgecolor="gray"
+        )
+        ax.add_feature(
+            cfeature.RIVERS.with_scale("10m"), linewidth=0.3, edgecolor="lightblue"
+        )
     else:
         ax.coastlines(resolution="110m", linewidth=0.6)
         ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-
 
     fig.suptitle(title)
     fig.tight_layout()

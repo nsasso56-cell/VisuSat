@@ -1,16 +1,16 @@
 import logging
 import os
 import sys
-import xarray as xr
-import numpy as np
-import cartopy
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from src.eumetsat_products_registry import *
-from src import eumetsat, utils
+
 import eumdac
-import rioxarray
 import matplotlib.pyplot as plt
+import numpy as np
+import rioxarray
+import xarray as xr
+from src import eumetsat, utils
+from src.eumetsat_products_registry import *
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
@@ -47,28 +47,26 @@ datatailor = eumdac.DataTailor(token)
 
 datastore = eumdac.DataStore(token)
 # Select an FCI collection, eg "FCI Level 1c High Resolution Image Data - MTG - 0 degree" - "EO:EUM:DAT:0665"
-selected_collection = datastore.get_collection('EO:EUM:DAT:0665')
- 
+selected_collection = datastore.get_collection("EO:EUM:DAT:0665")
+
 # Set sensing start and end time
 start = datetime(2025, 1, 26, 19, 30)
 end = datetime(2025, 1, 26, 23, 30)
- 
+
 # Retrieve latest product that matches the filter
-product = selected_collection.search(
-    dtstart=start,
-    dtend=end).first()
+product = selected_collection.search(dtstart=start, dtend=end).first()
 
 # Define the chain configuration
 chain = eumdac.tailor_models.Chain(
-    product='FCIL1HRFI',
-    format='geotiff',
-    filter={"bands" : ["ir_38_hr_effective_radiance"]},
-    projection='geographic',
-    roi='western_europe'
+    product="FCIL1HRFI",
+    format="geotiff",
+    filter={"bands": ["ir_38_hr_effective_radiance"]},
+    projection="geographic",
+    roi="western_europe",
 )
 
 output_file, customisation = eumetsat.customisation(product, chain)
-#output_file = '/Users/nicolassasso/Documents/Python_projects/VisuSat/data/eumetsat/custom/EO:EUM:DAT:0665/FCIL1HRFI-FPC-a0533003/FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_a0533003_FPC.tif'
+# output_file = '/Users/nicolassasso/Documents/Python_projects/VisuSat/data/eumetsat/custom/EO:EUM:DAT:0665/FCIL1HRFI-FPC-a0533003/FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_a0533003_FPC.tif'
 
 
 # Open geotiff
@@ -76,15 +74,15 @@ ds = rioxarray.open_rasterio(output_file)
 
 print(ds)
 
-ds = ds.where(ds != ds.attrs.get('_FillValue', np.nan))
+ds = ds.where(ds != ds.attrs.get("_FillValue", np.nan))
 
 # Deal the error values
-#for ib in range(len(ds.band)):
+# for ib in range(len(ds.band)):
 #    ds.isel(band=ib).values = ds.isel(band=ib).where(ds.isel(band=ib)!=ds._FillValue).values
 
 data = ds.isel(band=0)
 
-utils.stats_dataset(data, cmap = 'jet')
+utils.stats_dataset(data, cmap="jet")
 
 
 # Affichage
@@ -92,7 +90,7 @@ img = ds.isel(band=0)
 
 
 plt.figure(figsize=(8, 8))
-img.plot(vmin = -0.5, vmax = 0, cmap="gray")
+img.plot(vmin=-0.5, vmax=0, cmap="gray")
 plt.title("Image GeoTIFF - Bande 1")
 plt.show()
 
