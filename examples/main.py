@@ -2,11 +2,12 @@ import logging
 import os
 import sys
 import xarray as xr
+import numpy as np
 import cartopy
 from datetime import datetime, timedelta
 from pathlib import Path
 from src.eumetsat_products_registry import *
-from src import eumetsat
+from src import eumetsat, utils
 import eumdac
 import rioxarray
 import matplotlib.pyplot as plt
@@ -32,9 +33,6 @@ logging.basicConfig(
 logger = logging.getLogger(Path(__file__).stem)
 
 logger.info("Program launched.")
-
-start_time = datetime(year=2025, month=11, day=3, hour=11, minute=0, second=0)
-end_time = datetime(year=2025, month=11, day=3, hour=12, minute=0, second=0)
 
 # Collection required :
 required_collection = "EO:EUM:DAT:0665"  # Registry in data/EUMETSAT_products_registry
@@ -64,27 +62,42 @@ product = selected_collection.search(
 chain = eumdac.tailor_models.Chain(
     product='FCIL1HRFI',
     format='geotiff',
-    filter={"bands" : ["ir_38_hr_effective_radiance", "ir_38_hr_effective_radiance"]},
+    filter={"bands" : ["nir_22_hr_effective_radiance","nir_22_hr_effective_radiance"]},
     projection='geographic',
     roi='western_europe'
 )
 
-output_file, customisation = eumetsat.customisation(product, chain)
+#output_file, customisation = eumetsat.customisation(product, chain)
+#output_file = 'FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_c289404c_FPC.tif'
+output_file = '/Users/nicolassasso/Documents/Python_projects/VisuSat/data/eumetsat/custom/EO:EUM:DAT:0665/FCIL1HRFI-FPC-a0533003/FCIL1HRFI_20250126T232729Z_20250126T232919Z_epct_a0533003_FPC.tif'
+
 
 # Open geotiff
 ds = rioxarray.open_rasterio(output_file)
 
 print(ds)
 
-img = ds.isel(band=0)
+ds = ds.where(ds != ds.attrs.get('_FillValue', np.nan))
+
+# Deal the error values
+#for ib in range(len(ds.band)):
+#    ds.isel(band=ib).values = ds.isel(band=ib).where(ds.isel(band=ib)!=ds._FillValue).values
+
+data = ds.isel(band=0)
+
+utils.stats_dataset(data, cmap = 'jet')
+
 
 # Affichage
+img = ds.isel(band=0)
+
+
 plt.figure(figsize=(8, 8))
-img.plot(cmap="gray")
+img.plot(vmin = -0.5, vmax = 0, cmap="gray")
 plt.title("Image GeoTIFF - Bande 1")
 plt.show()
 
-
+sys.exit()
 
 output_files = eumetsat.download_data(
     required_collection, start_time, end_time, last=True

@@ -114,6 +114,8 @@ def download_data(
 
 def customisation(product, chain):
 
+    
+
     token = get_token()
     # Create datatailor object with your token
     datatailor = eumdac.DataTailor(token)
@@ -143,14 +145,19 @@ def customisation(product, chain):
         time.sleep(sleep_time)
 
 
+    #
+    datadir = os.path.join(project_root, "data","eumetsat", "custom", product.collection._id)
+
     logger.info("Starting download of customised products...")
     for product in customisation.outputs:
+        savepath = os.path.join(datadir, product)
+        os.makedirs(os.path.dirname(savepath), exist_ok=True)
         logger.info(f"Downloading product: {product}")
-        with customisation.stream_output(product) as source_file, open(source_file.name, 'wb') as destination_file:
+        with customisation.stream_output(product) as source_file, open(savepath, 'wb') as destination_file:
             shutil.copyfileobj(source_file, destination_file)
         logger.info(f"Product {product} downloaded successfully.")
 
-    return source_file.name, customisation
+    return savepath, customisation
 
 
 
