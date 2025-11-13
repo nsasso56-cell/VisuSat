@@ -1,5 +1,5 @@
 [project]
-name = "VisuSat"
+name = "visusat"
 version = "0.2.0"
 description = "Scripts and functions to download and visualize satellite data (EUMETSAT, Copernicus Marine Service, etc)"
 authors = [{ name = "Nicolas Sasso" }]
