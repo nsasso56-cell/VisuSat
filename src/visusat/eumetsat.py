@@ -13,10 +13,10 @@ import numpy as np
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import utils
+from visusat import utils
 
 logger = logging.getLogger(__name__)
-project_root = Path(__file__).resolve().parent.parent
+project_root = Path(__file__).resolve().parent.parent.parent
 
 matplotlib.rcParams["figure.dpi"] = 200
 matplotlib.rcParams.update(

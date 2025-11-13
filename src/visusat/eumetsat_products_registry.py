@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import Dict
 
 logger = logging.getLogger(__name__)
+
 # chemin vers le fichier de registre
 REGISTRY_PATH = Path(
     os.path.join(
-        Path(__file__).resolve().parent.parent, "data", "eumetsat_products.json"
+        Path(__file__).resolve().parent.parent.parent, "data", "eumetsat_products.json"
     )
 )
 

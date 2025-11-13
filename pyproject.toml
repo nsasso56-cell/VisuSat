@@ -1,6 +1,6 @@
 [project]
 name = "VisuSat"
-version = "0.1.0"
+version = "0.2.0"
 description = "Scripts and functions to download and visualize satellite data (EUMETSAT, Copernicus Marine Service, etc)"
 authors = [{ name = "Nicolas Sasso" }]
 requires-python = ">=3.9"
@@ -16,6 +16,11 @@ dependencies = [
     "copernicusmarine>=2.2.3",
     "typing>=3.10.0.0",
     "rioxarray>=0.15.0",
+    "sphinx>=7.4.7",
+    "sphinx-autodoc-typehints>=2.3.0",
+    "sphinx-rtd-theme>=3.0.2",
+    "myst-parser>=3.0.1",
+    "tree>=0.2.4",
 ]
 
 

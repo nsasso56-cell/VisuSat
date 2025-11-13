@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from src import utils
+from visusat import utils
 
 matplotlib.rcParams["figure.dpi"] = 200
 matplotlib.rcParams.update(
@@ -21,7 +21,7 @@ matplotlib.rcParams.update(
 )
 
 logger = logging.getLogger(__name__)
-project_root = Path(__file__).resolve().parent.parent
+project_root = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path(os.path.join(project_root, "data"))
 OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 

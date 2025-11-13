@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import rioxarray
 import xarray as xr
-from src import eumetsat, utils
-from src.eumetsat_products_registry import *
+from visusat import eumetsat, utils
+from visusat.eumetsat_products_registry import *
 
 # Basic Logging configuration
 LOG_FILE = Path(__file__).with_suffix(".log")
