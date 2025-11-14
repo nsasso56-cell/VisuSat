@@ -1,7 +1,7 @@
 # 🛰️ VisuSat project : 
 
 Python project dedicated to satellite data visualisation, handling and statistics.
-
+[![Documentation Status](https://readthedocs.org/projects/visusat/badge/?version=latest)](https://visusat.readthedocs.io/en/latest/)
 
 ## 🌍 Examples of vizualisations :
 
