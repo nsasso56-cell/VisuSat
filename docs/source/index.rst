@@ -15,6 +15,7 @@ documentation for details.
    :maxdepth: 2
    :caption: API Reference
 
+   src/visusat
    src/modules
    src/copernicus
    src/utils

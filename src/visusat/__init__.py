@@ -21,4 +21,5 @@ for satellite and ocean data analysis in Python, leveraging xarray, cartopy,
 copernicusmarine, cdsapi, and EUMDAC.
 """
 
+__all__ = ["copernicus", "eumetsat", "utils"]
 __version__ = "0.2.0"
