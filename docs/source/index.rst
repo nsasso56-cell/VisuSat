@@ -21,3 +21,10 @@ documentation for details.
    src/utils
    src/eumetsat
    src/eumetsat_products_registry
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Examples
+
+   examples/eumetsat_customisation
+   examples/copernicus_global_model

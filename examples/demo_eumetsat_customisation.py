@@ -3,7 +3,7 @@ Example: Request a custom MTG-FCI product via EUMETSAT Data Tailor,
 download the generated GeoTIFF, compute basic statistics, and plot the radiance.
 
 This example demonstrates:
-- Authentification using a local credential file,
+- Authentication using a local credential file,
 - Product search on a temporal window,
 - Submission and monitoring of a Data Tailor customisation,
 - Reading GeoTIFF outputs with rioxarray,
