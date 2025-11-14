@@ -1,3 +1,27 @@
+"""
+Interface utilities for interacting with the Copernicus Marine Service (CMEMS).
+
+This module provides high-level tools to define, execute, and process data
+requests to the Copernicus Marine Data Store using the
+``copernicusmarine`` Python client. It streamlines the creation of spatial,
+temporal, and vertical subset requests, handles caching, and enables easy
+post-processing through xarray.
+
+Main features include:
+
+- Construction of structured CMEMS subset requests through the
+  :class:`~visusat.copernicus.CopernicusRequest` class,
+- Execution of download requests with automatic output management
+  (``CopernicusRequest.fetch``),
+- Loading of downloaded datasets directly into xarray (``get_copdataset``),
+- Plotting utilities for ocean surface and subsurface currents
+  (``plot_currents``),
+- Additional helpers to support CMEMS velocity variable detection and dataset
+  inspection.
+
+This module centralizes CMEMS-related operations to ensure consistent,
+transparent, and reproducible oceanographic workflows within VisuSat.
+"""
 import logging
 import os
 from pathlib import Path
@@ -28,21 +52,69 @@ OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 
 class CopernicusRequest:
     """
-    Copernicus request class is used to define a proper request to be proposed to Copernicus Data Store.
+    Build and manage a data extraction request to the Copernicus Marine Data Store.
 
-    Example of use :
-    request = copernicus.CopernicusRequest(
-    dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
-    variables=["sla", "err_sla", "flag_ice"],
-    minimum_longitude=1,
-    maximum_longitude=359,
-    minimum_latitude=-71.81717698546082,
-    maximum_latitude=82.52141057014119,
-    start_datetime="2025-10-22T00:00:00",
-    end_datetime="2025-10-22T00:00:00",
-    output_filename="globaloceanidentifier_oct2025.nc"
+    This class defines a complete subset request (spatial, temporal, vertical,
+    and variable selection) and provides a convenient interface to download the
+    corresponding dataset using ``copernicusmarine.subset``.
 
-    CopernicusRequest.fetch() to download the data from Copernicus data store following request.
+    The request can be executed via the :meth:`fetch` method, which downloads the
+    data to the configured output path, unless the file already exists (this can
+    be overridden with ``force=True``).
+
+    Parameters
+    ----------
+    dataset_id : str
+        Identifier of the CMEMS dataset (e.g.
+        ``"cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"``).
+    variables : list of str
+        List of variable names to extract from the dataset.
+    start_datetime : str
+        Start date-time in ISO8601 format (e.g. ``"2025-01-01T00:00:00"``).
+    end_datetime : str
+        End date-time in the same format.
+    minimum_latitude : float
+        Minimum latitude of the requested spatial domain.
+    maximum_latitude : float
+        Maximum latitude of the requested spatial domain.
+    minimum_longitude : float
+        Minimum longitude of the requested domain.
+    maximum_longitude : float
+        Maximum longitude.
+    minimum_depth : float, optional
+        Minimum depth for the request (if applicable). Defaults to None.
+    maximum_depth : float, optional
+        Maximum depth. Defaults to None.
+    output_filename : str, optional
+        Name of the output NetCDF file. Defaults to ``"output.nc"``.
+    output_dir : str, optional
+        Directory where the output file will be saved. If None, a dataset-specific
+        directory under the project data folder is created automatically.
+    extra_params : dict, optional
+        Additional keyword arguments passed directly to ``copernicusmarine.subset``.
+
+    Attributes
+    ----------
+    output_path : str
+        Full path to the resulting NetCDF file.
+
+    Examples
+    --------
+    Create a request and download DUACS SLA:
+
+    >>> from visusat.copernicus import CopernicusRequest
+    >>> req = CopernicusRequest(
+    ...     dataset_id="cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D",
+    ...     variables=["sla", "err_sla"],
+    ...     minimum_longitude=1,
+    ...     maximum_longitude=359,
+    ...     minimum_latitude=-70,
+    ...     maximum_latitude=80,
+    ...     start_datetime="2025-10-22T00:00:00",
+    ...     end_datetime="2025-10-22T00:00:00",
+    ...     output_filename="duacs_sla.nc",
+    ... )
+    >>> req.fetch()
     """
 
     def __init__(
@@ -85,8 +157,19 @@ class CopernicusRequest:
         )
 
     def fetch(self, force=False):
-        """Download dataset except if file is already existent (can be bypass with force=True)."""
+        """
+        Download the requested dataset from the Copernicus Marine Data Store.
 
+        Parameters
+        ----------
+        force : bool, optional
+            If True, overwrite the file even if it already exists. Defaults to False.
+
+        Returns
+        -------
+        str
+            Path to the downloaded NetCDF file.
+        """
         logging.info(f"Output path : {self.output_path}")
 
         if not force and os.path.exists(self.output_path):
@@ -94,7 +177,8 @@ class CopernicusRequest:
             return
 
         logging.info(f"⏬ Downloading {self.output_path} ...")
-        os.remove(self.output_path)
+        if os.path.exists(self.output_path):
+            os.remove(self.output_path)
         copernicusmarine.subset(
             dataset_id=self.dataset_id,
             variables=self.variables,
@@ -113,10 +197,25 @@ class CopernicusRequest:
 
 def get_copdataset(request, force=False):
     """
-    Get the .netcdf dataset from Copernicus Marine Service.
-    - request : (class CopernicusRequest)
+    Download and open a Copernicus Marine dataset as an ``xarray.Dataset``.
 
-    Returns ds : dataset from .netcdf output.
+    This function triggers the download associated with a
+    :class:`~visusat.copernicus.CopernicusRequest` object and returns the
+    resulting NetCDF file as an opened ``xarray.Dataset``. If the file already
+    exists, the download is skipped unless ``force=True`` is provided.
+
+    Parameters
+    ----------
+    request : CopernicusRequest
+        A configured request describing the dataset subset to download.
+    force : bool, optional
+        If True, force redownload even if the file already exists.
+        Defaults to False.
+
+    Returns
+    -------
+    xarray.Dataset
+        The dataset opened from the downloaded NetCDF file.
     """
 
     request.fetch(force)  # Download the data
@@ -197,6 +296,52 @@ def plot_field(
     savepath=None,
     saveformat="png",
 ):
+    """
+    Plot a geophysical field on a map using Cartopy.
+
+    This function generates a 2D colormesh plot of a field defined on a regular
+    longitude–latitude grid. It supports global plots as well as regional zooms,
+    and includes coastlines, borders, and custom colorbar formatting. The output
+    figure can optionally be saved to disk.
+
+    Parameters
+    ----------
+    lon : array-like
+        2D array of longitudes corresponding to ``val``.
+    lat : array-like
+        2D array of latitudes corresponding to ``val``.
+    val : array-like
+        2D data field to plot (e.g. radiance, SST, wind speed).
+    title : str, optional
+        Figure title. Defaults to an empty string.
+    subdomain : list of float, optional
+        Geographic extent specified as ``[lon_min, lon_max, lat_min, lat_max]``.
+        If provided, the plot is zoomed to this region. Defaults to None.
+    cmap : str, optional
+        Matplotlib colormap name. Defaults to ``"Spectral_r"``.
+    cbar_label : str, optional
+        Label for the colorbar. Defaults to ``"unknown"``.
+    proj : cartopy.crs.Projection, optional
+        Map projection for the plot. Defaults to ``ccrs.PlateCarree()``.
+    savepath : str or path-like, optional
+        Path where the figure will be saved. If None, the figure is only returned.
+        Defaults to None.
+    saveformat : str, optional
+        Output format for saving (e.g. ``"png"``, ``"pdf"``). Defaults to ``"png"``.
+
+    Returns
+    -------
+    tuple
+        A tuple ``(fig, ax)`` where:
+            - ``fig`` is the created Matplotlib figure.
+            - ``ax`` is the Cartopy GeoAxes object.
+
+    Notes
+    -----
+    - ``lon`` and ``lat`` must match the shape of ``val``.
+    - ``subdomain`` must follow Plate Carrée coordinates.
+    - If ``savepath`` is provided, the figure is saved with the specified format.
+    """
     logger.info(f"Plot figure with field {title}.")
     # Initiate figure
     fig = plt.figure(figsize=(12, 6))
@@ -243,7 +388,44 @@ def plot_field(
 
 
 def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
+    """
+    Plot ocean currents from a Copernicus Marine dataset and save one figure
+    per time–depth combination.
 
+    This function reads a velocity field (u, v) from a CMEMS dataset, computes
+    the current magnitude, and produces a figure for each time step and each
+    depth level. The output figures are automatically saved into a dataset-
+    specific directory. Optional vector arrows can be added to visualise flow
+    direction.
+
+    Parameters
+    ----------
+    request : CopernicusRequest
+        Request object used to download the dataset. Its ``dataset_id`` is used
+        to determine the output directory for the generated figures.
+    ds : xarray.Dataset
+        The dataset containing velocity components. The function automatically
+        detects the velocity variable names via ``utils.check_velocity_cop``.
+        Expected dimensions: ``time``, ``depth``, ``latitude``, ``longitude``.
+    domain : list of float, optional
+        Geographic subdomain specified as ``[lon_min, lon_max, lat_min, lat_max]``.
+        If provided, plots are zoomed to this region. Defaults to None.
+    vectors : bool, optional
+        If True, overlay quiver arrows (u, v) to show current direction.
+        Defaults to False.
+
+    Returns
+    -------
+    None
+        The function generates and saves figures but does not return an object.
+
+    Notes
+    -----
+    - A separate PNG file is produced for each combination of time and depth.
+    - Velocity components are automatically identified using
+      ``utils.check_velocity_cop()``.
+    - Depth and time values are embedded into the output filename.
+    """
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
@@ -327,6 +509,30 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
 
 
 def get_cdsdataset(dataset, request):
+    """
+    Retrieve a dataset from the Copernicus Climate Data Store (CDS) via CDSAPI.
+
+    This function sends a retrieval request to the CDS API and downloads the
+    corresponding dataset to a local file. The CDS API handles caching, so
+    repeated requests with identical parameters will not trigger additional
+    downloads.
+
+    Parameters
+    ----------
+    dataset : str
+        Identifier of the dataset hosted on the Copernicus Climate Data Store.
+        Examples include ``"reanalysis-era5-single-levels"`` or 
+        ``"satellite-sea-surface-temperature"``.
+    request : dict
+        Dictionary of request parameters following CDSAPI conventions.
+        Must include spatial, temporal, and variable selection keys depending on 
+        the dataset.
+
+    Returns
+    -------
+    str
+        Path to the downloaded file produced by ``client.retrieve().download()``.
+    """
     client = cdsapi.Client()
     ds = client.retrieve(dataset, request).download()
     return ds

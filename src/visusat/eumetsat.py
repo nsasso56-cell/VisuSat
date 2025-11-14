@@ -1,3 +1,26 @@
+"""
+Tools for interacting with EUMETSAT Data Store and Data Tailor products.
+
+This module provides high-level utilities to authenticate, download, customise,
+and visualise EUMETSAT satellite data (e.g., MTG-FCI, Metop, MSG). It builds on
+the official EUMDAC Python client and offers additional helper routines suited
+for scientific workflows.
+
+The main features include:
+
+- Authentication with the EUMETSAT Data Store using locally stored credentials
+  (``get_token``),
+- Requesting and monitoring Data Tailor customisations (``customisation``),
+- Downloading satellite files over a specified time window (``download_data``),
+- Plotting Atmospheric Motion Vectors (AMVs) from Level-2 products
+  (``plot_amvs``),
+- Visualising radiance fields from FCI Level-1/Level-2 datasets
+  (``plot_radiance``),
+- General helper tools to facilitate EUMETSAT data processing within VisuSat.
+
+This module centralizes all interactions with EUMETSAT services to ensure
+consistent, robust, and reproducible satellite data workflows.
+"""
 import json
 import logging
 import os
@@ -25,6 +48,18 @@ matplotlib.rcParams.update(
 
 
 def get_token():
+    """
+    Retrieve an EUMETSAT Data Store access token using local credentials.
+
+    The function reads a JSON file containing the consumer key and secret,
+    and returns a valid ``eumdac.AccessToken`` object for authenticating
+    with the EUMETSAT Data Store (EUMDAC).
+
+    Returns
+    -------
+    eumdac.AccessToken
+        A valid authentication token for accessing EUMETSAT Data Store products.
+    """
     id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
     with open(id_file) as f:
         d = json.load(f)
@@ -44,16 +79,27 @@ def download_data(
     output_file=None,
 ):
     """
-    Download Eumetsat satellite Data via Eumdac API.
+    Download EUMETSAT satellite Data via the EUMDAC API.
 
-    Args :
-        - collection_id : ID of the required collection, available in EUMETSAT data store (string).
-        - start_time : start ot the desired time period (datetime)
-        - end_time : end of the desired time period (datetime)
-        - last : specify as True if you want only the last file of the period (ie more recent) (boolean, default = False)
-        - output_file : specify if you want to save in a specific location (string, default = None)
+    Parameters
+    ----------
+    collection_id : str
+        Identifier of the desired collection, as listed in the EUMETSAT Data Store.
+    start_time : datetime
+        Start ot the requested time period.
+    end_time : datetime
+        End of the requested time period.
+    last : bool, optional
+        If True, only download the most recent file within the time period.
+        Defaults to False.
+    output_file : str, optional
+        Specific output file path. Only valid if a single file is produced.
+        Ignored when multiple files are downloaded.
 
-    Returns output files path as a list of strings.
+    Returns
+    -------
+    list of str
+        Paths of the downloaded files.
     """
 
     # EUMETSAT authentification
@@ -114,7 +160,30 @@ def download_data(
 
 
 def customisation(product, chain):
+    """
+    Request and download a customised EUMETSAT product using the EUMDAC Data Tailor API.
 
+    This function submits a customisation request to the EUMETSAT Data Tailor Web
+    Services using the EUMDAC Python client. It monitors the job until completion,
+    handles possible error states, and downloads all generated output files to the
+    local data directory.
+
+    Parameters
+    ----------
+    product : eumdac.DataItem
+        The EUMETSAT product to customise. This is typically obtained via a search
+        in the EUMETSAT Data Store client.
+    chain : eumdac.tailor_models.Chain
+        Data Tailor processing chain describing the desired customisation
+        (e.g., spatial subset, spectral bands selection, projection, etc.).
+
+    Returns
+    -------
+    tuple of (str, eumdac.Customisation)
+        A tuple containing:
+            - The path to the last downloaded file.
+            - The ``Customisation`` object returned by the Data Tailor Web Service.
+    """
     token = get_token()
     # Create datatailor object with your token
     datatailor = eumdac.DataTailor(token)
@@ -167,13 +236,34 @@ def customisation(product, chain):
 
 def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=False):
     """
-    Plot the brut mean_radiance data contained in downloaded EUMETSAT .netcdf file.
-    Args :
-        - filename : name of the .netcdf file to treat.
-        - collection_id : Eumetsat collection ID from where data were extracted (mandatory).
-        - outfile : Specification of .png plot output (default = None, autogeneration of output filename).
-        - savefig : Specify False for no output save (default = True).
-        - Display : if True, display the figure, not recommended if numerous files to treat. (boolean, default = False)
+    Plot mean radiance fields from an EUMETSAT FCI AllSkyRadiance NetCDF product.
+
+    This function loads an FCI AllSkyRadiance dataset and visualises the
+    radiance distribution across the six AllSky categories for a given
+    spectral channel. Each category is displayed as a separate subplot.
+    The function supports automatic output naming and optional file saving
+    or on-screen display.
+
+    Parameters
+    ----------
+    filename : str or path-like
+        Path to the input NetCDF file containing ``radiance_mean`` data.
+    collection_id : str
+        EUMETSAT collection identifier from which the dataset was retrieved.
+        Used to determine the default output directory.
+    outfile : str or path-like, optional
+        Output filename for saving the generated figure. If None, a filename
+        is automatically constructed based on the input file. Defaults to None.
+    savefig : bool, optional
+        If True, save the figure to ``outfile``. Defaults to True.
+    display : bool, optional
+        If True, display the figure with ``plt.show()``. Defaults to False.
+
+    Returns
+    -------
+    None
+        The function creates and optionally saves a figure but does not 
+        return any object.
     """
     project_root = Path(__file__).resolve().parent.parent
     if outfile is None:
@@ -207,14 +297,38 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
 
 def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=False):
     """
-    Plot the brut AMVs data contained in downloaded EUMETSAT .netcdf file.
-    Args :
-        - filename : name of the .netcdf file to treat.
-        - collection_id : Eumetsat collection ID from where data were extracted (mandatory).
-        - outfile : Specification of .png plot output (default = None, autogeneration of output filename).
-        - savefig : Specify False for no output save (default = True).
-        - box : set domain to zoom in [lon_min,lon_max, lat_min, lat_max] (list, default = None)
-        - Display : if True, display the figure, not recommended if numerous files to treat. (boolean, default = False)
+    Plot Atmospheric Motion Vectors (AMVs) from an EUMETSAT AMV NetCDF product.
+
+    This function loads the AMV dataset, extracts the zonal (u) and meridional (v)
+    wind components, and visualises them as scatter plots on a map using a
+    Plate Carrée projection. Two subplots are generated: one for the zonal 
+    component and one for the meridional component. A zoomed domain can be
+    specified via the ``box`` argument.
+
+    Parameters
+    ----------
+    filename : str or path-like
+        Path to the input NetCDF file containing AMVs.
+    product : object
+        EUMETSAT product metadata object. Must contain ``collection_id`` and
+        ``description`` attributes.
+    box : list of float, optional
+        Geographic subset defined as ``[lon_min, lon_max, lat_min, lat_max]``.
+        If provided, the map will zoom into this region. Defaults to None.
+    outfile : str or path-like, optional
+        Output filename for the generated PNG figure. If None, a default name is
+        automatically constructed based on the input file. Defaults to None.
+    savefig : bool, optional
+        If True, save the figure to ``outfile``. Defaults to True.
+    display : bool, optional
+        If True, display the figure interactively using ``plt.show()``.
+        Not recommended when processing many files. Defaults to False.
+
+    Returns
+    -------
+    None
+        The function generates and optionally saves a figure, but does not 
+        return an object.
     """
     prefix = ""
     if outfile is None:
