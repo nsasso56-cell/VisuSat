@@ -36,10 +36,7 @@ from visusat import utils
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 
-matplotlib.rcParams["figure.dpi"] = 200
-matplotlib.rcParams.update(
-    {"text.usetex": True, "font.family": "serif", "font.size": 10}
-)
+
 
 
 def get_token():
@@ -261,8 +258,14 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         The function creates and optionally saves a figure but does not 
         return any object.
     """
+    import matplotlib
     import matplotlib.pyplot as plt
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
 
     project_root = Path(__file__).resolve().parent.parent
     if outfile is None:
@@ -329,10 +332,16 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         The function generates and optionally saves a figure, but does not 
         return an object.
     """
+    import matplotlib
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
     from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
 
     prefix = ""
     if outfile is None:
