@@ -22,21 +22,12 @@ Main features include:
 This module centralizes CMEMS-related operations to ensure consistent,
 transparent, and reproducible oceanographic workflows within VisuSat.
 """
+
 import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import cdsapi
-import copernicusmarine
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import xarray as xr
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from visusat import utils
 
 matplotlib.rcParams["figure.dpi"] = 200
@@ -170,6 +161,7 @@ class CopernicusRequest:
         str
             Path to the downloaded NetCDF file.
         """
+        import copernicusmarine
         logging.info(f"Output path : {self.output_path}")
 
         if not force and os.path.exists(self.output_path):
@@ -217,6 +209,7 @@ def get_copdataset(request, force=False):
     xarray.Dataset
         The dataset opened from the downloaded NetCDF file.
     """
+    import xarray as xr
 
     request.fetch(force)  # Download the data
 
@@ -227,6 +220,29 @@ def get_copdataset(request, force=False):
 
 
 def plot_copdataset(request, ds):
+    """
+    Plot each variable of a Copernicus Marine dataset retrieved via ``copernicusmarine``.
+
+    Parameters
+    ----------
+    request : CopernicusRequest
+        The request used to download the dataset.
+    ds : xarray.Dataset
+        Dataset containing the requested variables.
+
+    Notes
+    -----
+    All heavy imports (cartopy, matplotlib, numpy) are performed inside the
+    function to ensure ReadTheDocs compatibility.
+    """
+
+    # Local imports → RTD-safe
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
@@ -342,6 +358,11 @@ def plot_field(
     - ``subdomain`` must follow Plate Carrée coordinates.
     - If ``savepath`` is provided, the figure is saved with the specified format.
     """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
     logger.info(f"Plot figure with field {title}.")
     # Initiate figure
     fig = plt.figure(figsize=(12, 6))
@@ -426,6 +447,13 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
       ``utils.check_velocity_cop()``.
     - Depth and time values are embedded into the output filename.
     """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    import pandas as pd
+
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
@@ -533,6 +561,7 @@ def get_cdsdataset(dataset, request):
     str
         Path to the downloaded file produced by ``client.retrieve().download()``.
     """
+    import cdsapi
     client = cdsapi.Client()
     ds = client.retrieve(dataset, request).download()
     return ds
