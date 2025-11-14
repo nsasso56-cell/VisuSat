@@ -17,7 +17,7 @@ This example demonstrates how to:
    A template version is available in ``inputs/id_EUMETSAT_template.json``.
 
 
-.. literalinclude:: ../../examples/demo_eumetsat_datatailor.py
+.. literalinclude:: ../../../examples/demo_eumetsat_datatailor.py
    :language: python
    :linenos:
    :caption: Example script for downloading and plotting MTG-FCI data via the EUMETSAT Data Tailor.
