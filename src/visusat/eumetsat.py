@@ -28,13 +28,8 @@ import shutil
 import time
 from pathlib import Path
 
-import cartopy.crs as ccrs
 import eumdac
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
-from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from visusat import utils
 
@@ -184,6 +179,7 @@ def customisation(product, chain):
             - The path to the last downloaded file.
             - The ``Customisation`` object returned by the Data Tailor Web Service.
     """
+
     token = get_token()
     # Create datatailor object with your token
     datatailor = eumdac.DataTailor(token)
@@ -265,6 +261,9 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         The function creates and optionally saves a figure but does not 
         return any object.
     """
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
     project_root = Path(__file__).resolve().parent.parent
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", collection_id)
@@ -330,6 +329,11 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         The function generates and optionally saves a figure, but does not 
         return an object.
     """
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
     prefix = ""
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", product.collection_id)

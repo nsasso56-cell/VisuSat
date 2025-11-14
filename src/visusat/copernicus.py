@@ -182,7 +182,7 @@ class CopernicusRequest:
         logging.info("✅ Download succesful.")
 
 
-def get_copdataset(request, force=False):
+def get_copdataset(request, force=False) -> 'xr.Dataset':
     """
     Download and open a Copernicus Marine dataset as an ``xarray.Dataset``.
 
@@ -419,7 +419,7 @@ def plot_field(
     return fig, ax
 
 
-def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
+def plot_currents(request, ds: 'xr.Dataset', domain=None, vectors=False):
     """
     Plot ocean currents from a Copernicus Marine dataset and save one figure
     per time–depth combination.
