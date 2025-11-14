@@ -28,6 +28,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import xarray as xr
+
 from visusat import utils
 
 logger = logging.getLogger(__name__)
@@ -182,7 +184,7 @@ class CopernicusRequest:
         logging.info("✅ Download succesful.")
 
 
-def get_copdataset(request, force=False) -> 'xr.Dataset':
+def get_copdataset(request, force=False) -> xr.Dataset:
     """
     Download and open a Copernicus Marine dataset as an ``xarray.Dataset``.
 
@@ -204,8 +206,6 @@ def get_copdataset(request, force=False) -> 'xr.Dataset':
     xarray.Dataset
         The dataset opened from the downloaded NetCDF file.
     """
-    import xarray as xr
-
     request.fetch(force)  # Download the data
 
     ds = xr.open_dataset(request.output_path)  # Open the downloaded .netcdf file
@@ -359,7 +359,6 @@ def plot_field(
     - ``subdomain`` must follow Plate Carrée coordinates.
     - If ``savepath`` is provided, the figure is saved with the specified format.
     """
-    import numpy as np
     import matplotlib
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
@@ -419,7 +418,7 @@ def plot_field(
     return fig, ax
 
 
-def plot_currents(request, ds: 'xr.Dataset', domain=None, vectors=False):
+def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
     """
     Plot ocean currents from a Copernicus Marine dataset and save one figure
     per time–depth combination.
