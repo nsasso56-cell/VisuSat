@@ -30,11 +30,6 @@ from typing import Dict, List, Optional
 
 from visusat import utils
 
-matplotlib.rcParams["figure.dpi"] = 200
-matplotlib.rcParams.update(
-    {"text.usetex": True, "font.family": "serif", "font.size": 10}
-)
-
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path(os.path.join(project_root, "data"))
@@ -239,10 +234,16 @@ def plot_copdataset(request, ds):
     # Local imports → RTD-safe
     import numpy as np
     import pandas as pd
+    import matplotlib
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
 
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
@@ -359,10 +360,16 @@ def plot_field(
     - If ``savepath`` is provided, the figure is saved with the specified format.
     """
     import numpy as np
+    import matplotlib
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
     from mpl_toolkits.axes_grid1 import make_axes_locatable
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
+
     logger.info(f"Plot figure with field {title}.")
     # Initiate figure
     fig = plt.figure(figsize=(12, 6))
@@ -448,12 +455,18 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
     - Depth and time values are embedded into the output filename.
     """
     import numpy as np
+    import matplotlib
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     import pandas as pd
 
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
+    
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
