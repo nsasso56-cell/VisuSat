@@ -1,19 +1,22 @@
 
-# Input data (exception for templates)
+# --- Input data (exception for templates) ---
 inputs/*
 !inputs/id_EUMETSAT_template.json
 
-# Data directories :
-meteosat_data/*
+# --- Data directories ---
 data/*
 !data/eumetsat_products.json
 *.tif
 
-# Output directories :
+# --- Main.py files (development) ---
+examples/main*.py
+
+
+# --- Output directories ---
 outputs/*
 !outputs/examples
 
-# .egg-info dirs :
+# --- .egg-info dirs ---
 *.egg-info/
 
 # --- uv ---
@@ -33,11 +36,11 @@ docs/source/generated/
 docs/build/doctrees/
 docs/build/html/.doctrees/
 
-# VSCode dirs and virtual envs
+# --- VSCode dirs and virtual envs ---
 .vscode/
 .venv/
 venv/
 .DS_Store
 
-# Log files :
+# --- Log files ---
 *.log
