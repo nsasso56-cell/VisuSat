@@ -309,7 +309,7 @@ def plot_field(
     subdomain=None,
     cmap="Spectral_r",
     cbar_label="unknown",
-    proj=ccrs.PlateCarree(),
+    proj=None,
     savepath=None,
     saveformat="png",
 ):
@@ -369,6 +369,10 @@ def plot_field(
     matplotlib.rcParams.update(
         {"text.usetex": True, "font.family": "serif", "font.size": 10}
     )
+
+    # Default value ccrs.PlateCaree() for proj :
+    if proj is None :
+        proj = ccrs.PlateCarree()
 
     logger.info(f"Plot figure with field {title}.")
     # Initiate figure
@@ -466,7 +470,7 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
     matplotlib.rcParams.update(
         {"text.usetex": True, "font.family": "serif", "font.size": 10}
     )
-    
+
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
 
