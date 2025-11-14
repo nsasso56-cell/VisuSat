@@ -1,4 +1,7 @@
 """
+Copernicus module
+=================
+
 Interface utilities for interacting with the Copernicus Marine Service (CMEMS).
 
 This module provides high-level tools to define, execute, and process data

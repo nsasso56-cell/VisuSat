@@ -1,4 +1,7 @@
 """
+Utils module
+============
+
 Utility functions for consistent and robust handling of satellite and oceanographic data.
 
 This module provides a collection of helper routines used across the VisuSat

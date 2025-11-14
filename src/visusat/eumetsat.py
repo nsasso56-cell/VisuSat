@@ -1,4 +1,7 @@
 """
+EUMETSAT module
+===============
+
 Tools for interacting with EUMETSAT Data Store and Data Tailor products.
 
 This module provides high-level utilities to authenticate, download, customise,
