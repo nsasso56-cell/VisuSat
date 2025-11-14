@@ -1,7 +1,10 @@
 # 🛰️ VisuSat project : 
 
-Python project dedicated to satellite data visualisation, handling and statistics.
 [![Documentation Status](https://readthedocs.org/projects/visusat/badge/?version=latest)](https://visusat.readthedocs.io/en/latest/)
+
+VisuSat is a Python project dedicated to satellite data visualisation, handling and processing. It includes pipeelines for EUMETSAT and Copernicus Marine data stores.
+
+📘 Full documentation: https://visusat.readthedocs.io/en/latest/
 
 ## 🌍 Examples of vizualisations :
 
