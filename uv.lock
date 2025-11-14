@@ -3203,15 +3203,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/29/3f/63cbed2909786f0e5ac30a4ae5791ad597c6b5fec7167e161c55bba511ce/Tree-0.2.4.tar.gz", hash = "sha256:f84d8ec9bf50dd69f551da78925a23d110864e7706551f590cdade27646f7883", size = 6489, upload-time = "2018-07-03T20:49:29.918Z" }
 
 [[package]]
-name = "typing"
-version = "3.10.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/1b/835d4431805939d2996f8772aca1d2313a57e8860fec0e48e8e7dfe3a477/typing-3.10.0.0.tar.gz", hash = "sha256:13b4ad211f54ddbf93e5901a9967b1e07720c1d1b78d596ac6a439641aa1b130", size = 78962, upload-time = "2021-05-01T18:03:58.186Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/5d/865e17349564eb1772688d8afc5e3081a5964c640d64d1d2880ebaed002d/typing-3.10.0.0-py3-none-any.whl", hash = "sha256:12fbdfbe7d6cca1a42e485229afcb0b0c8259258cfb919b8a5e2a5c953742f89", size = 26320, upload-time = "2021-05-01T18:03:56.398Z" },
-]
-
-[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3294,7 +3285,6 @@ dependencies = [
     { name = "sphinx-autodoc-typehints", version = "3.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-rtd-theme" },
     { name = "tree" },
-    { name = "typing" },
     { name = "xarray", version = "2024.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "xarray", version = "2025.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -3322,7 +3312,6 @@ requires-dist = [
     { name = "sphinx-autodoc-typehints", specifier = ">=2.3.0" },
     { name = "sphinx-rtd-theme", specifier = ">=3.0.2" },
     { name = "tree", specifier = ">=0.2.4" },
-    { name = "typing", specifier = ">=3.10.0.0" },
     { name = "xarray" },
 ]
 
