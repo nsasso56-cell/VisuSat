@@ -1,7 +1,8 @@
 [project]
 name = "visusat"
 version = "0.2.0"
-description = "A unified toolkit for downloading, processing, and visualizing satellite (EUMETSAT, MTG, AMVs) and oceanographic (CMEMS) datasets."
+description = "Satellite data visualisation toolkit for EUMETSAT and Copernicus Marine datasets."
+readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Nicolas Sasso" , email = "n.sasso56@gmail.com"}]
 license = {file = "LICENSE"}
 requires-python = ">=3.9"
