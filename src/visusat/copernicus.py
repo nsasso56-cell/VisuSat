@@ -26,18 +26,60 @@ This module centralizes CMEMS-related operations to ensure consistent,
 transparent, and reproducible oceanographic workflows within VisuSat.
 """
 
+from __future__ import annotations
+
+# --- Standard library ---
 import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
+# --- Mandatory third-party dependencies ---
+import numpy as np
+import pandas as pd
 import xarray as xr
 
+# --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
+try:
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+except Exception:  # cartopy often missing on RTD / Windows
+    ccrs = None
+    cfeature = None
+
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+except Exception:  # matplotlib may not exist on RTD
+    matplotlib = None
+    plt = None
+    make_axes_locatable = None
+
+try:
+    import cdsapi
+except Exception:
+    cdsapi = None  # allows the module to be imported without cdsapi installed
+
+try:
+    import copernicusmarine
+except Exception:
+    copernicusmarine = None  # allows docs to build without the library
+
+# --- Local dependencies ---
 from visusat import utils
 
+# --- Global config (only executed if matplotlib is present) ---
+if matplotlib is not None:
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": True, "font.family": "serif", "font.size": 10}
+    )
+
+# --- Project paths ---
 logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = Path(os.path.join(project_root, "data"))
+DATA_DIR = Path(os.path.join(project_root, "data","copernicus"))
 OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 
 
@@ -136,7 +178,7 @@ class CopernicusRequest:
         self.maximum_depth = maximum_depth or None
         self.output_filename = output_filename or "output.nc"
         self.output_dir = output_dir or os.path.join(
-            project_root, "data", "copernicus", self.dataset_id
+            DATA_DIR, self.dataset_id
         )
         self.extra_params = extra_params or {}
 
@@ -161,7 +203,6 @@ class CopernicusRequest:
         str
             Path to the downloaded NetCDF file.
         """
-        import copernicusmarine
         logging.info(f"Output path : {self.output_path}")
 
         if not force and os.path.exists(self.output_path):
@@ -234,19 +275,11 @@ def plot_copdataset(request, ds):
     function to ensure ReadTheDocs compatibility.
     """
 
-    # Local imports → RTD-safe
-    import numpy as np
-    import pandas as pd
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
+    if ccrs is None or plt is None:
+        raise ImportError(
+            "plot_copdataset() requires cartopy and matplotlib.\n"
+            "Install them with: pip install visusat[full]"
+        )
 
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
@@ -362,15 +395,11 @@ def plot_field(
     - ``subdomain`` must follow Plate Carrée coordinates.
     - If ``savepath`` is provided, the figure is saved with the specified format.
     """
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
+    if ccrs is None or plt is None:
+        raise ImportError(
+            "plot_field() requires cartopy and matplotlib.\n"
+            "Install them with: pip install visusat[full]"
+        )
 
     # Default value ccrs.PlateCaree() for proj :
     if proj is None :
@@ -460,18 +489,11 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
       ``utils.check_velocity_cop()``.
     - Depth and time values are embedded into the output filename.
     """
-    import numpy as np
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    import pandas as pd
-
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
+    if ccrs is None or plt is None:
+        raise ImportError(
+            "plot_currents() requires cartopy and matplotlib.\n"
+            "Install them with: pip install visusat[full]"
+        )
 
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
@@ -580,7 +602,6 @@ def get_cdsdataset(dataset, request):
     str
         Path to the downloaded file produced by ``client.retrieve().download()``.
     """
-    import cdsapi
     client = cdsapi.Client()
     ds = client.retrieve(dataset, request).download()
     return ds

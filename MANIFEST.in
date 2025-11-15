@@ -1,0 +1,48 @@
+# ============================
+#  VisuSat - MANIFEST.in
+# ============================
+
+# -- Include source code --
+recursive-include src *.py
+
+# -- Include package metadata --
+include pyproject.toml
+include README.md
+include LICENSE
+
+# -- Include JSON registries (but NOT credentials) --
+recursive-include data *.json
+
+# -- Include documentation (optional) --
+recursive-include docs *.rst
+recursive-include docs *.md
+recursive-include docs Makefile
+recursive-include docs/source *.rst
+recursive-include docs/source *.md
+
+# -- Exclude temporary files --
+exclude *.pyc
+exclude *.pyo
+exclude *__pycache__*
+recursive-exclude .cache *
+
+# -- Exclude credentials or sensitive templates --
+exclude inputs/*
+exclude *id_EUMETSAT.json*
+exclude *id_EUMETSAT_template.json*
+
+# -- Exclude examples to keep wheel lightweight --
+recursive-exclude examples *.py
+recursive-exclude examples *.ipynb
+
+# -- Exclude images, output files, logs --
+recursive-exclude outputs *
+recursive-exclude figures *
+recursive-exclude plots *
+recursive-exclude logs *
+
+# -- Exclude development artefacts --
+exclude .gitignore
+exclude .gitattributes
+exclude .DS_Store
+exclude *.log

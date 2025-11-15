@@ -19,22 +19,37 @@ The goal of this module is to centralize small but essential operations to keep
 the rest of the codebase clean, consistent, and resilient across various data
 sources (EUMETSAT, CMEMS, CDSAPI, etc.).
 """
+from __future__ import annotations
+
+# --- Standard Library --- 
 import logging
 from datetime import datetime
 from pathlib import Path
 
-import matplotlib
-import matplotlib.pyplot as plt
+# --- Madantory third-party dependencies --- 
 import numpy as np
 import xarray as xr
 
-logger = logging.getLogger(__name__)
-project_root = Path(__file__).resolve().parent.parent
+# --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+except Exception:  
+    matplotlib = None
+    plt = None
 
-matplotlib.rcParams["figure.dpi"] = 200
-matplotlib.rcParams.update(
-    {"text.usetex": True, "font.family": "serif", "font.size": 10}
-)
+# --- Matplotlib config (conditional) ---
+if matplotlib is not None:
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": False, "font.family": "serif", "font.size": 10}
+    )
+
+# --- Logger ---
+logger = logging.getLogger(__name__)
+
+# --- Project paths ---
+project_root = Path(__file__).resolve().parent.parent.parent
 
 
 def safe_open_dataset(path):
@@ -237,6 +252,12 @@ def stats_dataset(data: xr.DataArray, cmap="viridis"):
     - The 2D histograms use flattened grids and ignore missing values.
     - Useful as an initial visual inspection or quality check of CMEMS or model fields.
     """
+    if plt is None:
+        raise ImportError(
+            "stats_dataset() requires matplotlib.\n"
+            "Install it with: pip install visusat[full]"
+        )
+
     logger.info("Beginning computation and plotting of dataset statistics...")
 
     low, high = np.nanpercentile(data, [1, 99])

@@ -3,13 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-VisuSat documentation
+VisuSat Documentation
 =====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+Welcome to the official documentation of **VisuSat**, a Python toolkit for
+processing, customising, and visualising satellite data from EUMETSAT and
+Copernicus Marine Service.
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting Started
+
+   installation/installation
+   installation/credentials
 
 .. toctree::
    :maxdepth: 2
@@ -22,9 +28,17 @@ documentation for details.
    src/eumetsat
    src/eumetsat_products_registry
 
+
+
 .. toctree::
    :maxdepth: 1
    :caption: Examples
 
    examples/eumetsat_customisation
    examples/copernicus_global_model
+
+.. toctree::
+   :maxdepth: 1
+   :caption: About
+
+   license

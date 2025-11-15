@@ -1,7 +1,10 @@
 
 # --- Input data (exception for templates) ---
 inputs/*
-!inputs/id_EUMETSAT_template.json
+
+# --- Never commit credentials ---
+*.json
+!data/*.json   # allow official registry files
 
 # --- Data directories ---
 data/*
@@ -11,10 +14,8 @@ data/*
 # --- Main.py files (development) ---
 examples/main*.py
 
-
 # --- Output directories ---
 outputs/*
-!outputs/examples
 
 # --- .egg-info dirs ---
 *.egg-info/

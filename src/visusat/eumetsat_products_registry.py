@@ -19,6 +19,7 @@ Notes
 - Users must explicitly call :func:`register_product` to add entries.
 - The JSON file is stored at ``data/eumetsat_products.json``.
 """
+# --- Standard library ---
 import json
 import logging
 import os
@@ -26,12 +27,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict
 
+# --- Logger ---
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Path to registry file
 # ---------------------------------------------------------------------------
-
 REGISTRY_PATH = Path(
     os.path.join(
         Path(__file__).resolve().parent.parent.parent, "data", "eumetsat_products.json"
@@ -41,7 +42,6 @@ REGISTRY_PATH = Path(
 # ---------------------------------------------------------------------------
 # Product dataclass
 # ---------------------------------------------------------------------------
-
 @dataclass
 class Product:
     """

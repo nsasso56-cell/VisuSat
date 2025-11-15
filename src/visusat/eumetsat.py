@@ -24,6 +24,9 @@ The main features include:
 This module centralizes all interactions with EUMETSAT services to ensure
 consistent, robust, and reproducible satellite data workflows.
 """
+from __future__ import annotations
+
+# --- Standard library imports ---
 import json
 import logging
 import os
@@ -31,18 +34,45 @@ import shutil
 import time
 from pathlib import Path
 
+# --- Mandatory third-party dependencies ---
 import eumdac
 import numpy as np
 
+
+# --- Third-party imports (wrapped in try/except so documentation builds gracefully) ---
+try:
+    import cartopy.crs as ccrs
+except Exception:  
+    ccrs = None
+
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+except Exception:  
+    matplotlib = None
+    plt = None
+    make_axes_locatable = None
+
+
+# --- Local dependencies ---
 from visusat import utils
 
+# --- Matplotlib config (conditional) ---
+if matplotlib is not None:
+    matplotlib.rcParams["figure.dpi"] = 200
+    matplotlib.rcParams.update(
+        {"text.usetex": False, "font.family": "serif", "font.size": 10}
+    )
+
+# -- Logger ---
 logger = logging.getLogger(__name__)
+
+# --- Project paths ---
 project_root = Path(__file__).resolve().parent.parent.parent
+DEFAULT_CREDENTIALS_PATH = Path.home() / ".config" / "visusat" / "id_EUMETSAT.json"
 
-
-
-
-def get_token():
+def get_token(credentials_path: Path = DEFAULT_CREDENTIALS_PATH):
     """
     Retrieve an EUMETSAT Data Store access token using local credentials.
 
@@ -55,13 +85,13 @@ def get_token():
     eumdac.AccessToken
         A valid authentication token for accessing EUMETSAT Data Store products.
     """
-    id_file = os.path.join(project_root, "inputs", "id_EUMETSAT.json")
-    with open(id_file) as f:
-        d = json.load(f)
-        # print(d)
-    consumer_key = d["consumer"]
-    consumer_secret = d["secret"]
-    token = eumdac.AccessToken((consumer_key, consumer_secret))
+    if not credentials_path.exists():
+        raise FileNotFoundError(
+            f"Could not find EUMETSAT credentials. Please create the file at: {credentials_path}"
+        )
+    with open(credentials_path) as f:
+        creds = json.load(f)
+    token = eumdac.AccessToken((creds["consumer"], creds["secret"]))
 
     return token
 
@@ -261,16 +291,7 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         The function creates and optionally saves a figure but does not 
         return any object.
     """
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
-
-    project_root = Path(__file__).resolve().parent.parent
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", collection_id)
         os.makedirs(outdir, exist_ok=True)
@@ -335,17 +356,6 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         The function generates and optionally saves a figure, but does not 
         return an object.
     """
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
-
     prefix = ""
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", product.collection_id)
