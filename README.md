@@ -35,7 +35,7 @@ Example of the the Sea Level Anomaly (in meter) from an aggregate of all availab
 Product: [SEALEVEL_GLO_PHY_L4_NRT_008_046](https://data.marine.copernicus.eu/product/SEALEVEL_GLO_PHY_L4_NRT_008_046/description)
 
 <p align="center">
-  <img src="exmaples/images/example_Copernicus_allsatellitesGlobalOceanGridded_ssh_%20sealevelanomaly.png" width="700">
+  <img src="examples/images/example_Copernicus_allsatellitesGlobalOceanGridded_ssh_%20sealevelanomaly.png" width="700">
 </p>
 
 ### 🌀 Global Ocean Physics (Mercator Ocean)
@@ -44,7 +44,7 @@ Hourly Sea Water Potential Temperature —
 Product: [GLOBAL_ANALYSISFORECAST_PHY_001_024](https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description)
 
 <p align="center">
-  <img src="exmaples/images/example_Copernicus_GOPhysicsOutputs_hourlymean_sst.png" width="700">
+  <img src="examples/images/example_Copernicus_GOPhysicsOutputs_hourlymean_sst.png" width="700">
 </p>
 
 ---
