@@ -33,28 +33,14 @@ import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 # --- Mandatory third-party dependencies ---
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-# --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
-try:
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-except Exception:  # cartopy often missing on RTD / Windows
-    ccrs = None
-    cfeature = None
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-except Exception:  # matplotlib may not exist on RTD
-    matplotlib = None
-    plt = None
-    make_axes_locatable = None
 
 try:
     import cdsapi
@@ -66,23 +52,30 @@ try:
 except Exception:
     copernicusmarine = None  # allows docs to build without the library
 
-# --- Local dependencies ---
-from visusat import utils
+# --- Local utilities ---
+from .utils import safe_open_dataset, escape_latex, check_velocity_cop, isodate
+from .plotting import plot_field
 
-# --- Global config (only executed if matplotlib is present) ---
-if matplotlib is not None:
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
+# --- Public API ---
+__all__ = [
+    "CopernicusRequest",
+    "load_dataset",
+    "plot_fields",
+    "plot_currents",
+]
+
+# --- Logger ---
+logger = logging.getLogger(__name__)
 
 # --- Project paths ---
-logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path(os.path.join(project_root, "data","copernicus"))
 OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 
-
+# ==============================================================================
+# Dataclass for request
+# ==============================================================================
+@dataclass
 class CopernicusRequest:
     """
     Build and manage a data extraction request to the Copernicus Marine Data Store.
@@ -145,51 +138,25 @@ class CopernicusRequest:
     ...     maximum_latitude=80,
     ...     start_datetime="2025-10-22T00:00:00",
     ...     end_datetime="2025-10-22T00:00:00",
+    ...     minimum_depth=None,
+    ...     maximum_depth=None,
     ...     output_filename="duacs_sla.nc",
     ... )
     >>> req.fetch()
     """
+    dataset_id: str
+    variables: List[str]
+    minimum_longitude: float
+    maximum_longitude: float
+    minimum_latitude: float
+    maximum_latitude: float
+    start_datetime: str
+    end_datetime: str
+    minimum_depth: Optional[float] = None
+    maximum_depth: Optional[float] = None
+    output_filename: Optional[str] = "copernicus_output.nc"
 
-    def __init__(
-        self,
-        dataset_id: str,
-        variables: List[str],
-        start_datetime: str,
-        end_datetime: str,
-        minimum_latitude: float,
-        maximum_latitude: float,
-        minimum_longitude: float,
-        maximum_longitude: float,
-        minimum_depth: Optional[float] = None,
-        maximum_depth: Optional[float] = None,
-        output_filename: Optional[str] = None,
-        output_dir: Optional[str] = None,
-        extra_params: Optional[Dict[str, str]] = None,
-    ):
-        self.dataset_id = dataset_id  # ex: "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
-        self.variables = variables  # ex: ["sla", "adt"]
-        self.start_datetime = start_datetime  # ex: "2025-01-01T00:00:00"
-        self.end_datetime = end_datetime  # ex: "2025-01-10T00:00:00"
-        self.minimum_latitude = minimum_latitude
-        self.maximum_latitude = maximum_latitude
-        self.minimum_longitude = minimum_longitude
-        self.maximum_longitude = maximum_longitude
-        self.minimum_depth = minimum_depth or None
-        self.maximum_depth = maximum_depth or None
-        self.output_filename = output_filename or "output.nc"
-        self.output_dir = output_dir or os.path.join(
-            DATA_DIR, self.dataset_id
-        )
-        self.extra_params = extra_params or {}
-
-        # Set output_path :
-        os.makedirs(self.output_dir, exist_ok=True)
-        self.output_path = (
-            os.path.join(self.output_dir, self.output_filename)
-            or f"./{self.output_filename}"
-        )
-
-    def fetch(self, force=False):
+    def fetch(self, force: bool = False) -> Path:
         """
         Download the requested dataset from the Copernicus Marine Data Store.
 
@@ -203,32 +170,44 @@ class CopernicusRequest:
         str
             Path to the downloaded NetCDF file.
         """
-        logging.info(f"Output path : {self.output_path}")
+        logger.info(f"Fetching Copernicus dataset: {self.dataset_id}")
 
-        if not force and os.path.exists(self.output_path):
-            logging.info(f"✅ {self.output_path} already existent, ignore download.")
-            return
+        filepath = Path(self.output_filename).resolve()
 
-        logging.info(f"⏬ Downloading {self.output_path} ...")
-        if os.path.exists(self.output_path):
-            os.remove(self.output_path)
-        copernicusmarine.subset(
-            dataset_id=self.dataset_id,
-            variables=self.variables,
-            minimum_longitude=self.minimum_longitude,
-            maximum_longitude=self.maximum_longitude,
-            minimum_latitude=self.minimum_latitude,
-            maximum_latitude=self.maximum_latitude,
-            minimum_depth=self.minimum_depth,
-            maximum_depth=self.maximum_depth,
-            start_datetime=self.start_datetime,
-            end_datetime=self.end_datetime,
-            output_filename=self.output_path,
-        )
-        logging.info("✅ Download succesful.")
+        # Manage overwrite manually
+        if filepath.exists() and not force:
+            logger.info(f"File already exists → {filepath}, skipping download.")
+            return filepath
+    
+        request_kwargs = {
+            "dataset_id": self.dataset_id,
+            "variables": self.variables,
+            "minimum_longitude": self.minimum_longitude,
+            "maximum_longitude": self.maximum_longitude,
+            "minimum_latitude": self.minimum_latitude,
+            "maximum_latitude": self.maximum_latitude,
+            "start_datetime": self.start_datetime,
+            "end_datetime": self.end_datetime,
+            "output_filename": self.output_filename,
+        }
 
+        # Add optional depth selection
+        if self.minimum_depth is not None and self.maximum_depth is not None:
+            request_kwargs["minimum_depth"] = self.minimum_depth
+            request_kwargs["maximum_depth"] = self.maximum_depth
 
-def get_copdataset(request, force=False) -> xr.Dataset:
+        # Perform download
+        logger.info(f"→ Downloading with params: {request_kwargs}")
+        response = copernicusmarine.subset(**request_kwargs)
+        output = response.filepaths[0]
+        logger.info(f"Download complete → {output}")
+        
+        return Path(output)
+
+# ==============================================================================
+# Dataset loader
+# ==============================================================================
+def load_dataset(request : CopernicusRequest, force : bool = False) -> xr.Dataset:
     """
     Download and open a Copernicus Marine dataset as an ``xarray.Dataset``.
 
@@ -250,15 +229,39 @@ def get_copdataset(request, force=False) -> xr.Dataset:
     xarray.Dataset
         The dataset opened from the downloaded NetCDF file.
     """
-    request.fetch(force)  # Download the data
-
-    ds = xr.open_dataset(request.output_path)  # Open the downloaded .netcdf file
-    logging.info(ds)
-
+    filepath = request.fetch(force)  # Download the data
+    ds = safe_open_dataset(filepath)
+    logger.info(f"Dataset opened with dims {dict(ds.dims)} and vars {list(ds.data_vars)}")
     return ds
 
+# ==============================================================================
+# PLOTS
+# ==============================================================================
+def _require_matplotlib():
+    """Raise an error if Matplotlib is not installed."""
+    try:
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+    except ImportError:
+        raise ImportError(
+            "Matplotlib is required for plotting functions in visusat.copernicus."
+        )
+    return plt, make_axes_locatable
 
-def plot_copdataset(request, ds):
+
+def _require_cartopy():
+    """Raise an error if cartopy is missing."""
+    try:
+        import cartopy.crs as ccrs
+        import cartopy.feature as cfeature
+    except ImportError:
+        raise ImportError("Cartopy is required for geographic plotting.")
+    return ccrs, cfeature
+
+
+# ------------------------------------------------------------------------------
+
+def plot_fields(request: CopernicusRequest, ds: xr.Dataset):
     """
     Plot each variable of a Copernicus Marine dataset retrieved via ``copernicusmarine``.
 
@@ -275,179 +278,33 @@ def plot_copdataset(request, ds):
     function to ensure ReadTheDocs compatibility.
     """
 
-    if ccrs is None or plt is None:
-        raise ImportError(
-            "plot_copdataset() requires cartopy and matplotlib.\n"
-            "Install them with: pip install visusat[full]"
-        )
+    plt, make_axes_locatable = _require_matplotlib()
+    ccrs, cfeature = _require_cartopy()
 
-    figdir = os.path.join(OUT_DIR, request.dataset_id)
-    os.makedirs(figdir, exist_ok=True)
+    outdir = Path("outputs") / "copernicus" / request.dataset_id
+    os.makedirs(outdir, exist_ok=True)
 
-    for variable in list(ds):
+    for var in ds.data_vars:
+        da = ds[var].squeeze()
+        longname = escape_latex(getattr(da, "long_name", var))
+        shortname = getattr(da, "short_name", var)
+        isotime = isodate(da.time.values)
+        logger.info(f"Plotting variable '{var}' ({longname}) at {isotime}.")
 
-        lon = ds[variable].longitude.values
-        lat = ds[variable].latitude.values
-        val = ds[variable].squeeze().values
-        longname = utils.str_replace(ds[variable].long_name)
-        # units = ds[variable].units
-        t = ds[variable].time.values[0]
-        isotime = pd.Timestamp(t).isoformat()
+        lon = da.longitude.values
+        lat = da.latitude.values
+        val = da.values
 
-        logging.info(f"Plot {longname} at {isotime}.")
-
-        lon2d, lat2d = np.meshgrid(lon, lat)
-
-        # Initiate figure
-        proj = ccrs.PlateCarree()
-        fig = plt.figure(figsize=(12, 6))
-        ax = plt.axes(projection=proj)
-        ax.set_global()
-
-        im = ax.pcolormesh(
-            lon, lat, val, transform=proj, cmap="Spectral_r", shading="auto"
-        )
-        # Cosmetics :
-        ax.coastlines(resolution="110m", linewidth=1)
-        ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-        gl = ax.gridlines(
-            draw_labels=True, linewidth=1, color="lightgray", linestyle="--"
-        )
-        gl.top_labels = False
-        gl.right_labels = False
-
-        # Colorbar
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
-        cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
-        if hasattr(ds[variable], "units"):
-            cbar.set_label(f"{longname} ({ds[variable].units})")
+        if hasattr(da, "units"):
+            cbar_label = f"{longname}\n({da.units})"
         else:
-            cbar.set_label(f"{longname}")
+            cbar_label = longname
 
-        plt.suptitle(f"{ds.title}.\n{longname} - {isotime}")
+        savepath = outdir / f"{shortname}_{isotime}.png"
 
-        # Savefig
-        savename = ds[variable].standard_name + "_" + isotime
-        savepath = os.path.join(figdir, savename + ".png")
-        fig.tight_layout()
-        fig.savefig(savepath, format="png", dpi=300, bbox_inches="tight")
-        logging.info(f"Successfully saved in {savepath}")
-        plt.close()
-        # plt.show()
-
-
-def plot_field(
-    lon,
-    lat,
-    val,
-    title="",
-    subdomain=None,
-    cmap="Spectral_r",
-    cbar_label="unknown",
-    proj=None,
-    savepath=None,
-    saveformat="png",
-):
-    """
-    Plot a geophysical field on a map using Cartopy.
-
-    This function generates a 2D colormesh plot of a field defined on a regular
-    longitude–latitude grid. It supports global plots as well as regional zooms,
-    and includes coastlines, borders, and custom colorbar formatting. The output
-    figure can optionally be saved to disk.
-
-    Parameters
-    ----------
-    lon : array-like
-        2D array of longitudes corresponding to ``val``.
-    lat : array-like
-        2D array of latitudes corresponding to ``val``.
-    val : array-like
-        2D data field to plot (e.g. radiance, SST, wind speed).
-    title : str, optional
-        Figure title. Defaults to an empty string.
-    subdomain : list of float, optional
-        Geographic extent specified as ``[lon_min, lon_max, lat_min, lat_max]``.
-        If provided, the plot is zoomed to this region. Defaults to None.
-    cmap : str, optional
-        Matplotlib colormap name. Defaults to ``"Spectral_r"``.
-    cbar_label : str, optional
-        Label for the colorbar. Defaults to ``"unknown"``.
-    proj : cartopy.crs.Projection, optional
-        Map projection for the plot. Defaults to ``ccrs.PlateCarree()``.
-    savepath : str or path-like, optional
-        Path where the figure will be saved. If None, the figure is only returned.
-        Defaults to None.
-    saveformat : str, optional
-        Output format for saving (e.g. ``"png"``, ``"pdf"``). Defaults to ``"png"``.
-
-    Returns
-    -------
-    tuple
-        A tuple ``(fig, ax)`` where:
-            - ``fig`` is the created Matplotlib figure.
-            - ``ax`` is the Cartopy GeoAxes object.
-
-    Notes
-    -----
-    - ``lon`` and ``lat`` must match the shape of ``val``.
-    - ``subdomain`` must follow Plate Carrée coordinates.
-    - If ``savepath`` is provided, the figure is saved with the specified format.
-    """
-    if ccrs is None or plt is None:
-        raise ImportError(
-            "plot_field() requires cartopy and matplotlib.\n"
-            "Install them with: pip install visusat[full]"
-        )
-
-    # Default value ccrs.PlateCaree() for proj :
-    if proj is None :
-        proj = ccrs.PlateCarree()
-
-    logger.info(f"Plot figure with field {title}.")
-    # Initiate figure
-    fig = plt.figure(figsize=(12, 6))
-    ax = plt.axes(projection=proj)
-    ax.set_global()
-    im = ax.pcolormesh(
-        lon, lat, val, transform=ccrs.PlateCarree(), cmap=cmap, shading="auto"
-    )
-
-    # Cosmetics :
-
-    gl = ax.gridlines(draw_labels=True, linewidth=1, color="lightgray", linestyle="--")
-    gl.top_labels = False
-    gl.right_labels = False
-
-    # Colorbar
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("bottom", size="2.5%", pad=0.3, axes_class=plt.Axes)
-    cbar = plt.colorbar(im, cax=cax, orientation="horizontal", fraction=0.046)
-    cbar.set_label(cbar_label)
-
-    if subdomain is not None:
-        ax.set_extent(subdomain)
-        ax.add_feature(cfeature.COASTLINE.with_scale("10m"), linewidth=0.6)
-        ax.add_feature(cfeature.BORDERS.with_scale("10m"), linewidth=0.4)
-        ax.add_feature(
-            cfeature.LAKES.with_scale("10m"), linewidth=0.3, edgecolor="gray"
-        )
-        ax.add_feature(
-            cfeature.RIVERS.with_scale("10m"), linewidth=0.3, edgecolor="lightblue"
-        )
-    else:
-        ax.coastlines(resolution="110m", linewidth=0.6)
-        ax.add_feature(cfeature.BORDERS, linewidth=0.4)
-
-    fig.suptitle(title)
-    fig.tight_layout()
-
-    if savepath is not None:
-        fig.savefig(savepath, format=saveformat, dpi=300, bbox_inches="tight")
-        logger.info("Figure saved in {save_path}.")
-
-    return fig, ax
+        logger.info(f"Plot {longname} at {isotime}.")
+        plot_field(lon, lat, val, title=f"{ds.title}.\n{longname} - {isotime}", cbar_label=cbar_label, savepath=savepath)
+        
 
 
 def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
@@ -489,11 +346,8 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
       ``utils.check_velocity_cop()``.
     - Depth and time values are embedded into the output filename.
     """
-    if ccrs is None or plt is None:
-        raise ImportError(
-            "plot_currents() requires cartopy and matplotlib.\n"
-            "Install them with: pip install visusat[full]"
-        )
+    plt, make_axes_locatable = _require_matplotlib()
+    ccrs, cfeature = _require_cartopy()
 
     figdir = os.path.join(OUT_DIR, request.dataset_id)
     os.makedirs(figdir, exist_ok=True)
@@ -504,7 +358,7 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
             suffix = ""
             # Check velocity variables
             try:
-                u_var, v_var = utils.check_velocity_cop(ds)
+                u_var, v_var = check_velocity_cop(ds)
                 u = ds[u_var][i, j, :, :].values
                 v = ds[v_var][i, j, :, :].values
             except KeyError as e:

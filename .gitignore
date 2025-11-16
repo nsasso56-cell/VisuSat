@@ -10,6 +10,7 @@ inputs/*
 data/*
 !data/eumetsat_products.json
 *.tif
+*.nc
 
 # --- Main.py files (development) ---
 examples/main*.py

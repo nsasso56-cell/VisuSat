@@ -8,8 +8,9 @@ Modules:
 - eumetsat_products_registry: Register and load known EUMETSAT products
 """
 from importlib.metadata import version, PackageNotFoundError
+from .plotting import plot_field
 
-__all__ = ["copernicus", "eumetsat", "utils", "eumetsat_products_registry"]
+__all__ = ["copernicus", "eumetsat", "utils", "eumetsat_products_registry", "plot_field"]
 
 try:
     __version__ = version("visusat")

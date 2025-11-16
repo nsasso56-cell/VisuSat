@@ -26,6 +26,7 @@ Copernicus Marine Service.
    src/copernicus
    src/utils
    src/eumetsat
+   src/plotting
    src/eumetsat_products_registry
 
 

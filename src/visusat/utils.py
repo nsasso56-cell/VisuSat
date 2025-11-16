@@ -25,12 +25,20 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Tuple
 
 # --- Madantory third-party dependencies --- 
 import numpy as np
-import xarray as xr
+import pandas as pd
 
 # --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
+try:
+    import xarray as xr
+except ImportError as exc:
+    raise ImportError(
+        "xarray is required for dataset utilities in visusat.utils."
+    ) from exc
+
 try:
     import matplotlib
     import matplotlib.pyplot as plt
@@ -48,11 +56,53 @@ if matplotlib is not None:
 # --- Logger ---
 logger = logging.getLogger(__name__)
 
+# --- Public API ---------------------------------------------------------------
+__all__ = [
+    "escape_latex",
+    "parse_isodate",
+    "safe_open_dataset",
+    "check_velocity_cop",
+    "stats_dataset",
+]
+
 # --- Project paths ---
 project_root = Path(__file__).resolve().parent.parent.parent
 
+# ------------------------------------------------------------------------------
+# STRING UTILITIES
+# ------------------------------------------------------------------------------
+def escape_latex(text: str) -> str:
+    """
+    Escape LaTeX-sensitive characters in a string.
 
-def safe_open_dataset(path):
+
+    Parameters
+    ----------
+    text : str
+        Input string to sanitize for LaTeX compatibility.
+
+    Returns
+    -------
+    str
+        Escaped string, safe to use in LaTeX environments.
+
+    Notes
+    -----
+    - Currently only escapes the percent symbol (``%``).
+    - The function can be extended to support more LaTeX-sensitive characters.
+    """
+    return text.replace("%", "\%")
+
+# ------------------------------------------------------------------------------
+# TIME UTILITIES
+# ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
+# DATASET LOADING
+# ------------------------------------------------------------------------------
+
+def safe_open_dataset(path: str | Path):
     """
     Open a NetCDF file using the first available compatible backend.
 
@@ -71,7 +121,7 @@ def safe_open_dataset(path):
 
     Parameters
     ----------
-    path : str or path-like
+    path : str or Path
         Path to the input NetCDF file.
 
     Returns
@@ -91,24 +141,33 @@ def safe_open_dataset(path):
     - ``scipy`` can only read classic NetCDF3 files.
     - This function logs which backend succeeded or failed.
     """
-    for engine in ("h5netcdf", "netcdf4", "scipy"):
+    engines = ("h5netcdf", "netcdf4", "scipy")
+    for engine in engines:
         try:
             ds = xr.open_dataset(path, engine=engine)
             logger.info(f"Open with engine '{engine}'")
             return ds
         except Exception as e:
             logger.warning(f" Fail with engine '{engine}': {e}")
-    raise RuntimeError("No compatible backend for this file.")
+
+    raise RuntimeError(f"Could not open dataset {path}. No compatible backend for this file.")
 
 
-def isodate(date):
+
+def isodate(date) -> str:
     """
-    Convert a timestamp string formatted as ``YYYYMMDDHHMMSS`` into ISO 8601 format.
+    Convert different date-like objects into a clean ISO8601 string.
+
+    Accepted inputs:
+        - numpy.datetime64
+        - pandas.Timestamp
+        - datetime.datetime
+        - str (ISO8601 or compact YYYYMMDDhhmmss)
 
     Parameters
     ----------
-    date : str
-        Timestamp expressed as a 14-digit string, e.g. ``"20250113123000"``.
+    date : Any
+        Date or datetime-like object to be converted.
 
     Returns
     -------
@@ -118,19 +177,47 @@ def isodate(date):
     Raises
     ------
     ValueError
-        If the input string does not match the expected ``YYYYMMDDHHMMSS`` format.
+        If the input value cannot be interpreted as a valid date.
 
     Notes
     -----
     This helper function is typically used to format metadata extracted from
     satellite or model filenames.
     """
-    dt = datetime.strptime(date, "%Y%m%d%H%M%S")
-    iso_date = dt.isoformat()
-    return iso_date
+    # 1) pandas Timestamp (common with xarray)
+    if isinstance(date, pd.Timestamp):
+        return date.isoformat()
 
+    # 2) numpy.datetime64 → convert using pandas
+    if isinstance(date, np.datetime64):
+        return pd.Timestamp(date).isoformat()
 
-def check_velocity_cop(ds: xr.Dataset):
+    # 3) Already a datetime object
+    if isinstance(date, datetime):
+        return date.isoformat()
+
+    # 4) String already ISO
+    if isinstance(date, str):
+        # If already ISO-like
+        if "T" in date:
+            return date
+
+        # Try compact format YYYYMMDDHHMMSS
+        for fmt in ("%Y%m%d%H%M%S", "%Y%m%d"):
+            try:
+                return datetime.strptime(date, fmt).isoformat()
+            except ValueError:
+                pass
+
+        raise ValueError(f"Unrecognized date string format: {date}")
+    
+    raise TypeError(f"Unsupported date type: {type(date)}")
+
+# ------------------------------------------------------------------------------
+# COPERNICUS / OCEAN VELOCITY UTILITIES
+# ------------------------------------------------------------------------------
+
+def check_velocity_cop(ds: "xr.Dataset") -> Tuple[str, str]:
     """
     Detect available ocean velocity components in a Copernicus Marine dataset.
 
@@ -152,7 +239,7 @@ def check_velocity_cop(ds: xr.Dataset):
 
     Returns
     -------
-    tuple of str
+    (str, str)
         A tuple ``(u_var, v_var)`` giving the names of the detected
         eastward and northward velocity variables.
 
@@ -175,45 +262,19 @@ def check_velocity_cop(ds: xr.Dataset):
 
     for u_var, v_var in possible_pairs:
         if u_var in ds and v_var in ds:
-            logging.info(f"✅ Velocity variables detected : {u_var}, {v_var}")
+            logging.info(f"Velocity variables detected : {u_var}, {v_var}")
             return u_var, v_var
-
-        msg = (
-            "❌ No velocity variable found in dataset.\n"
-            "Variables available : " + ", ".join(list(ds.data_vars))
-        )
-    logging.error(msg)
-    raise KeyError("Missing velocitty variables in dataset. (uo/vo or ugos/vgos).")
+        
+    valid_vars = ", ".join(ds.data_vars)
+    raise KeyError(f"Missing velocitty variables in dataset. Available variable : {valid_vars}.")
 
 
-def str_replace(text):
-    """
-    Escape LaTeX-sensitive characters in a string for safe use in Matplotlib labels.
-
-    This function replaces certain special characters that conflict with
-    Matplotlib's LaTeX rendering engine (e.g. the percent symbol ``%``), making
-    the string safe to use in figure titles, axis labels, or annotations.
-
-    Parameters
-    ----------
-    text : str
-        Input string to sanitize for LaTeX compatibility.
-
-    Returns
-    -------
-    str
-        A LaTeX-safe version of the input string.
-
-    Notes
-    -----
-    - Currently only escapes the percent symbol (``%``).
-    - The function can be extended to support more LaTeX-sensitive characters.
-    """
-    new_str = text.replace("%", "\%")
-    return new_str
 
 
-def stats_dataset(data: xr.DataArray, cmap="viridis"):
+# ------------------------------------------------------------------------------
+# STATISTICS / DIAGNOSTICS
+# ------------------------------------------------------------------------------
+def stats_dataset(data: "xr.DataArray", cmap : str = "viridis"):
     """
     Compute and display basic statistical histograms for a geospatial dataset.
 
@@ -248,6 +309,8 @@ def stats_dataset(data: xr.DataArray, cmap="viridis"):
 
     Notes
     -----
+    - Requires Matplotlib.
+    - Does not call ``plt.show()`` (left to the user).
     - Outlier filtering uses the 1st and 99th percentiles of the dataset.
     - The 2D histograms use flattened grids and ignore missing values.
     - Useful as an initial visual inspection or quality check of CMEMS or model fields.
@@ -260,40 +323,30 @@ def stats_dataset(data: xr.DataArray, cmap="viridis"):
 
     logger.info("Beginning computation and plotting of dataset statistics...")
 
+    # --- Filter extremes ---
     low, high = np.nanpercentile(data, [1, 99])
-    data_filtered = data.where((data >= low) & (data <= high))
-    # fig, ax = plt.subplots(figsize=(8, 8))
-    data_filtered.plot.hist(bins=50)
+    filtered = data.where((data >= low) & (data <= high))
 
-    # plt.show()
+    # --- 1D Histogram --- 
+    filtered.plot.hist(bins=50)
 
-    # LON,LAT = np.meshgrid(data.x.values.flatten(), data.y.values.flatten())
-    # lon = data.x.values.flatten()
-    low, high = np.nanpercentile(data, [1, 99])
-    data_filtered = data.where((data >= low) & (data <= high))
-    val = data_filtered.values.flatten()
-    LON, LAT = np.meshgrid(
-        data_filtered.x.values.flatten(), data_filtered.y.values.flatten()
-    )
+    # --- 2D Longitude vs Value --- 
+    if {"x", "y"}.issubset(filtered.coords):   
+        LON, LAT = np.meshgrid(
+            filtered.x.values.flatten(), filtered.y.values.flatten()
+        )
+        val = filtered.values.flatten()
 
-    mask = ~np.isnan(LON.flatten()) & ~np.isnan(val)
-    LON_clean = LON.flatten()[mask.flatten()]
-    val_clean = val.flatten()[mask.flatten()]
+        mask = ~np.isnan(val)
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    plt.hist2d(LON_clean, val_clean, bins=(50, 100), cmap=cmap)
-    plt.ylabel(f"{data.long_name}\n({data.unit}) ")
-    plt.xlabel("Longitude (°)")
-    plt.colorbar(label="Counts")
-    # plt.show()
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.hist2d(LON.flatten()[mask], val[mask], bins=(50, 50), cmap=cmap)
+        ax.set_ylabel(f"{data.long_name}\n({data.unit}) ")
+        ax.set_xlabel("Longitude (°)")
+        ax.colorbar(label="Counts")
 
-    mask = ~np.isnan(LAT.flatten()) & ~np.isnan(val)
-    LAT_clean = LAT.flatten()[mask.flatten()]
-    val_clean = val.flatten()[mask.flatten()]
-
-    fig, ax = plt.subplots(figsize=(8, 8))
-    plt.hist2d(val_clean, LAT_clean, bins=(100, 50), cmap=cmap)
-    plt.xlabel(f"{data.long_name}\n({data.unit}) ")
-    plt.ylabel("Lattiude (°)")
-    plt.colorbar(label="Counts")
-    # plt.show()
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.hist2d(val[mask], LAT.flatten()[mask], bins=(50, 50), cmap=cmap)
+        ax.xlabel(f"{data.long_name}\n({data.unit}) ")
+        ax.ylabel("Lattiude (°)")
+        ax.colorbar(label="Counts")
