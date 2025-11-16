@@ -33,28 +33,14 @@ import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 # --- Mandatory third-party dependencies ---
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-# --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
-try:
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-except Exception:  # cartopy often missing on RTD / Windows
-    ccrs = None
-    cfeature = None
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-except Exception:  # matplotlib may not exist on RTD
-    matplotlib = None
-    plt = None
-    make_axes_locatable = None
 
 try:
     import cdsapi
@@ -66,23 +52,30 @@ try:
 except Exception:
     copernicusmarine = None  # allows docs to build without the library
 
-# --- Local dependencies ---
-from visusat import utils
+# --- Local utilities ---
+from .utils import safe_open_dataset, escape_latex, check_velocity_cop, isodate
+from .plotting import plot_field
 
-# --- Global config (only executed if matplotlib is present) ---
-if matplotlib is not None:
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": True, "font.family": "serif", "font.size": 10}
-    )
+# --- Public API ---
+__all__ = [
+    "CopernicusRequest",
+    "load_dataset",
+    "plot_fields",
+    "plot_currents",
+]
+
+# --- Logger ---
+logger = logging.getLogger(__name__)
 
 # --- Project paths ---
-logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = Path(os.path.join(project_root, "data","copernicus"))
 OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
 
-
+# ==============================================================================
+# Dataclass for request
+# ==============================================================================
+@dataclass
 class CopernicusRequest:
     """
     Build and manage a data extraction request to the Copernicus Marine Data Store.
@@ -145,51 +138,25 @@ class CopernicusRequest:
     ...     maximum_latitude=80,
     ...     start_datetime="2025-10-22T00:00:00",
     ...     end_datetime="2025-10-22T00:00:00",
+    ...     minimum_depth=None,
+    ...     maximum_depth=None,
     ...     output_filename="duacs_sla.nc",
     ... )
     >>> req.fetch()
     """
+    dataset_id: str
+    variables: List[str]
+    minimum_longitude: float
+    maximum_longitude: float
+    minimum_latitude: float
+    maximum_latitude: float
+    start_datetime: str
+    end_datetime: str
+    minimum_depth: Optional[float] = None
+    maximum_depth: Optional[float] = None
+    output_filename: Optional[str] = "copernicus_output.nc"
 
-    def __init__(
-        self,
-        dataset_id: str,
-        variables: List[str],
-        start_datetime: str,
-        end_datetime: str,
-        minimum_latitude: float,
-        maximum_latitude: float,
-        minimum_longitude: float,
-        maximum_longitude: float,
-        minimum_depth: Optional[float] = None,
-        maximum_depth: Optional[float] = None,
-        output_filename: Optional[str] = None,
-        output_dir: Optional[str] = None,
-        extra_params: Optional[Dict[str, str]] = None,
-    ):
-        self.dataset_id = dataset_id  # ex: "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
-        self.variables = variables  # ex: ["sla", "adt"]
-        self.start_datetime = start_datetime  # ex: "2025-01-01T00:00:00"
-        self.end_datetime = end_datetime  # ex: "2025-01-10T00:00:00"
-        self.minimum_latitude = minimum_latitude
-        self.maximum_latitude = maximum_latitude
-        self.minimum_longitude = minimum_longitude
-        self.maximum_longitude = maximum_longitude
-        self.minimum_depth = minimum_depth or None
-        self.maximum_depth = maximum_depth or None
-        self.output_filename = output_filename or "output.nc"
-        self.output_dir = output_dir or os.path.join(
-            DATA_DIR, self.dataset_id
-        )
-        self.extra_params = extra_params or {}
-
-        # Set output_path :
-        os.makedirs(self.output_dir, exist_ok=True)
-        self.output_path = (
-            os.path.join(self.output_dir, self.output_filename)
-            or f"./{self.output_filename}"
-        )
-
-    def fetch(self, force=False):
+    def fetch(self, force: bool = False) -> Path:
         """
         Download the requested dataset from the Copernicus Marine Data Store.
 
@@ -203,30 +170,39 @@ class CopernicusRequest:
         str
             Path to the downloaded NetCDF file.
         """
-        logging.info(f"Output path : {self.output_path}")
+        logger.info(f"Fetching Copernicus dataset: {self.dataset_id}")
 
-        if not force and os.path.exists(self.output_path):
-            logging.info(f"✅ {self.output_path} already existent, ignore download.")
-            return
+        filepath = Path(self.output_filename).resolve()
 
-        logging.info(f"⏬ Downloading {self.output_path} ...")
-        if os.path.exists(self.output_path):
-            os.remove(self.output_path)
-        copernicusmarine.subset(
-            dataset_id=self.dataset_id,
-            variables=self.variables,
-            minimum_longitude=self.minimum_longitude,
-            maximum_longitude=self.maximum_longitude,
-            minimum_latitude=self.minimum_latitude,
-            maximum_latitude=self.maximum_latitude,
-            minimum_depth=self.minimum_depth,
-            maximum_depth=self.maximum_depth,
-            start_datetime=self.start_datetime,
-            end_datetime=self.end_datetime,
-            output_filename=self.output_path,
-        )
-        logging.info("✅ Download succesful.")
+        # Manage overwrite manually
+        if filepath.exists() and not force:
+            logger.info(f"File already exists → {filepath}, skipping download.")
+            return filepath
+    
+        request_kwargs = {
+            "dataset_id": self.dataset_id,
+            "variables": self.variables,
+            "minimum_longitude": self.minimum_longitude,
+            "maximum_longitude": self.maximum_longitude,
+            "minimum_latitude": self.minimum_latitude,
+            "maximum_latitude": self.maximum_latitude,
+            "start_datetime": self.start_datetime,
+            "end_datetime": self.end_datetime,
+            "output_filename": self.output_filename,
+        }
 
+        # Add optional depth selection
+        if self.minimum_depth is not None and self.maximum_depth is not None:
+            request_kwargs["minimum_depth"] = self.minimum_depth
+            request_kwargs["maximum_depth"] = self.maximum_depth
+
+        # Perform download
+        logger.info(f"→ Downloading with params: {request_kwargs}")
+        response = copernicusmarine.subset(**request_kwargs)
+        output = response.filepaths[0]
+        logger.info(f"Download complete → {output}")
+        
+        return Path(output)
 
 def get_copdataset(request, force=False) -> xr.Dataset:
     """
