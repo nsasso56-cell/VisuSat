@@ -22,3 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Import issues in ReadTheDocs.
+
+## [🚧 Unreleased]
+
+ Unreleased — feature/api-standardization
+
+### [✨ Added]
+New visusat.plotting module
+- Centralizes all geospatial plotting utilities previously scattered across copernicus.py and eumetsat.py.
+- Provides a robust, reusable plot_field() function with:
+- Automatic cartopy/matplotlib lazy-loading
+- Full control: subdomain, labels, shading, colorbar label, DPI, projection, etc.
+- Built-in validation and safe file saving
+- Professional defaults (Spectral_r, 110m coastlines)
+- Includes internal helper functions: _require_matplotlib(), _require_cartopy()
+Added public API export
+- __all__ = ["plot_field"] inside plotting.py
+- Added from .plotting import plot_field in visusat/__init__.py
+Added sphinx documentation scaffold
+- Created new file docs/source/src/plotting.rst with:
+
+### [🏷️ Version Target]
+v0.3.0
