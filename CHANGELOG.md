@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.0] - 2025-02-15
+## [0.2.0] - 2025-11-14
 ### Added
 - First PyPI release 🎉
 - Full documentation hosted on ReadTheDocs.
@@ -23,11 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Import issues in ReadTheDocs.
 
-## [🚧 Unreleased]
 
- Unreleased — feature/api-standardization
+## [0.3.0] - 2025-11-16
 
-### [✨ Added]
+ feature/api-standardization
+
+### [Added]
 New visusat.plotting module
 - Centralizes all geospatial plotting utilities previously scattered across copernicus.py and eumetsat.py.
 - Provides a robust, reusable plot_field() function with:
@@ -42,5 +43,8 @@ Added public API export
 Added sphinx documentation scaffold
 - Created new file docs/source/src/plotting.rst with:
 
-### [🏷️ Version Target]
-v0.3.0
+### [Unreleased]
+
+
+
+
