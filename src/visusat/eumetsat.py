@@ -42,8 +42,11 @@ import numpy as np
 # --- Third-party imports (wrapped in try/except so documentation builds gracefully) ---
 try:
     import cartopy.crs as ccrs
+    from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 except Exception:  
     ccrs = None
+    LongitudeFormatter = None
+    LatitudeFormatter = None
 
 try:
     import matplotlib
@@ -422,8 +425,8 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         # add these before plotting
         gl.top_labels = False  # suppress top labels
         gl.right_labels = False  # suppress right labels
-        gl.xformatter = LONGITUDE_FORMATTER
-        gl.yformatter = LATITUDE_FORMATTER
+        gl.xformatter = LongitudeFormatter
+        gl.yformatter = LatitudeFormatter
 
     if box is not None:
         logger.info(f"Zoom on box {box}.")
