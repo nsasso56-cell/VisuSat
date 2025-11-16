@@ -56,14 +56,14 @@ logger.info("Request initialised.")
 # ---------------------------------------------------------------------------
 # Download + Open dataset
 # ---------------------------------------------------------------------------
-ds = copernicus.get_copdataset(request, force=False)
+ds = copernicus.load_dataset(request, force=False)
 logger.info(f"Dataset opened successfully:\n{ds}")
 
 # ---------------------------------------------------------------------------
 # Plot all scalar fields
 # ---------------------------------------------------------------------------
 logger.info("Plotting scalar variables (temperature, salinity, SSH)...")
-copernicus.plot_copdataset(request, ds)
+copernicus.plot_fields(request, ds)
 
 # ---------------------------------------------------------------------------
 # Plot currents
