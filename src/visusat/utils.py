@@ -9,10 +9,11 @@ package. These utilities include:
 
 - Safe opening of NetCDF files using several possible backends 
   (``safe_open_dataset``),
-- Conversion of compact timestamp strings into ISO 8601 format (``isodate``),
+- Conversion of compact timestamp strings into ISO 8601 format (``parse_isodate``),
 - Detection of velocity component variable names in Copernicus Marine datasets
-  (``check_velocity_cop``),
-- Escaping of LaTeX-sensitive characters for Matplotlib labels (``str_replace``),
+  (``detect_velocity_vars``),
+- Escaping of LaTeX-sensitive characters for Matplotlib labels (``escape_latex``),
+- Compute and display basic statistical histograms for a geospatial dataset (``plot_dataset_stats``).
 - General-purpose functions used by plotting and data-access routines.
 
 The goal of this module is to centralize small but essential operations to keep
@@ -32,26 +33,22 @@ import numpy as np
 import pandas as pd
 
 # --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
-try:
-    import xarray as xr
-except ImportError as exc:
-    raise ImportError(
-        "xarray is required for dataset utilities in visusat.utils."
-    ) from exc
+def _require_xarray():    
+    try:
+        import xarray as xr
+    except ImportError as exc:
+        raise ImportError(
+            "xarray is required for dataset utilities in visusat.utils."
+        ) from exc
+    return xr
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt
-except Exception:  
-    matplotlib = None
-    plt = None
-
-# --- Matplotlib config (conditional) ---
-if matplotlib is not None:
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": False, "font.family": "serif", "font.size": 10}
-    )
+def _require_matplotlib():
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt
+    except ImportError as exc:  
+        raise ImportError("Matplotlib is required for plotting in visusat.utils.") from exc
+    return matplotlib, plt
 
 # --- Logger ---
 logger = logging.getLogger(__name__)
@@ -61,8 +58,8 @@ __all__ = [
     "escape_latex",
     "parse_isodate",
     "safe_open_dataset",
-    "check_velocity_cop",
-    "stats_dataset",
+    "detect_velocity_vars",
+    "plot_dataset_stats",
 ]
 
 # --- Project paths ---
@@ -97,64 +94,7 @@ def escape_latex(text: str) -> str:
 # TIME UTILITIES
 # ------------------------------------------------------------------------------
 
-
-# ------------------------------------------------------------------------------
-# DATASET LOADING
-# ------------------------------------------------------------------------------
-
-def safe_open_dataset(path: str | Path):
-    """
-    Open a NetCDF file using the first available compatible backend.
-
-    This function attempts to open the dataset sequentially using several
-    xarray-compatible NetCDF engines. This is useful because different
-    datasets may require different backends depending on how the file was
-    encoded (NetCDF3, NetCDF4/HDF5, CF conventions, etc.).
-
-    The engines are tested in the following order:
-      1. ``h5netcdf``
-      2. ``netcdf4``
-      3. ``scipy``
-
-    The first successful engine is used to load and return the dataset.
-    If none of the engines works, a ``RuntimeError`` is raised.
-
-    Parameters
-    ----------
-    path : str or Path
-        Path to the input NetCDF file.
-
-    Returns
-    -------
-    xarray.Dataset
-        The opened dataset.
-
-    Raises
-    ------
-    RuntimeError
-        If none of the available backends can open the file.
-
-    Notes
-    -----
-    - ``h5netcdf`` is often the fastest backend and works well with modern
-      NetCDF4/HDF5 files.
-    - ``scipy`` can only read classic NetCDF3 files.
-    - This function logs which backend succeeded or failed.
-    """
-    engines = ("h5netcdf", "netcdf4", "scipy")
-    for engine in engines:
-        try:
-            ds = xr.open_dataset(path, engine=engine)
-            logger.info(f"Open with engine '{engine}'")
-            return ds
-        except Exception as e:
-            logger.warning(f" Fail with engine '{engine}': {e}")
-
-    raise RuntimeError(f"Could not open dataset {path}. No compatible backend for this file.")
-
-
-
-def isodate(date) -> str:
+def parse_isodate(date) -> str:
     """
     Convert different date-like objects into a clean ISO8601 string.
 
@@ -214,10 +154,70 @@ def isodate(date) -> str:
     raise TypeError(f"Unsupported date type: {type(date)}")
 
 # ------------------------------------------------------------------------------
+# DATASET LOADING
+# ------------------------------------------------------------------------------
+
+def safe_open_dataset(path: str | Path):
+    """
+    Open a NetCDF file using the first available compatible backend.
+
+    This function attempts to open the dataset sequentially using several
+    xarray-compatible NetCDF engines. This is useful because different
+    datasets may require different backends depending on how the file was
+    encoded (NetCDF3, NetCDF4/HDF5, CF conventions, etc.).
+
+    The engines are tested in the following order:
+      1. ``h5netcdf``
+      2. ``netcdf4``
+      3. ``scipy``
+
+    The first successful engine is used to load and return the dataset.
+    If none of the engines works, a ``RuntimeError`` is raised.
+
+    Parameters
+    ----------
+    path : str or Path
+        Path to the input NetCDF file.
+
+    Returns
+    -------
+    xarray.Dataset
+        The opened dataset.
+
+    Raises
+    ------
+    RuntimeError
+        If none of the available backends can open the file.
+
+    Notes
+    -----
+    - ``h5netcdf`` is often the fastest backend and works well with modern
+      NetCDF4/HDF5 files.
+    - ``scipy`` can only read classic NetCDF3 files.
+    - This function logs which backend succeeded or failed.
+    """
+    # --- Third party dependencies ---
+    xr = _require_xarray()
+
+    engines = ("h5netcdf", "netcdf4", "scipy")
+    for engine in engines:
+        try:
+            ds = xr.open_dataset(path, engine=engine)
+            logger.info(f"Open with engine '{engine}'")
+            return ds
+        except Exception as e:
+            logger.warning(f" Fail with engine '{engine}': {e}")
+
+    raise RuntimeError(f"Could not open dataset {path}. No compatible backend for this file.")
+
+
+
+
+# ------------------------------------------------------------------------------
 # COPERNICUS / OCEAN VELOCITY UTILITIES
 # ------------------------------------------------------------------------------
 
-def check_velocity_cop(ds: "xr.Dataset") -> Tuple[str, str]:
+def detect_velocity_vars(ds: "xr.Dataset") -> Tuple[str, str]:
     """
     Detect available ocean velocity components in a Copernicus Marine dataset.
 
@@ -274,7 +274,7 @@ def check_velocity_cop(ds: "xr.Dataset") -> Tuple[str, str]:
 # ------------------------------------------------------------------------------
 # STATISTICS / DIAGNOSTICS
 # ------------------------------------------------------------------------------
-def stats_dataset(data: "xr.DataArray", cmap : str = "viridis"):
+def plot_dataset_stats(data: "xr.DataArray", cmap : str = "viridis"):
     """
     Compute and display basic statistical histograms for a geospatial dataset.
 
@@ -315,10 +315,13 @@ def stats_dataset(data: "xr.DataArray", cmap : str = "viridis"):
     - The 2D histograms use flattened grids and ignore missing values.
     - Useful as an initial visual inspection or quality check of CMEMS or model fields.
     """
-    if plt is None:
-        raise ImportError(
-            "stats_dataset() requires matplotlib.\n"
-            "Install it with: pip install visusat[full]"
+    matplotlib, plt = _require_matplotlib()
+
+    # --- Matplotlib config (conditional) ---
+    if matplotlib is not None:
+        matplotlib.rcParams["figure.dpi"] = 200
+        matplotlib.rcParams.update(
+            {"text.usetex": False, "font.family": "serif", "font.size": 10}
         )
 
     logger.info("Beginning computation and plotting of dataset statistics...")

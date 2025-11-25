@@ -101,7 +101,7 @@ band0 = ds.isel(band=0)
 # Compute dataset statistics (custom util)
 # ===============================================================
 logger.info("Computing dataset statistics...")
-utils.stats_dataset(band0, cmap="jet")
+utils.plot_dataset_stats(band0, cmap="jet")
 
 
 # ===============================================================

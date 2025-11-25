@@ -63,7 +63,7 @@ def _require_cartopy():
 
 
 # --- Local dependencies ---
-from .utils import safe_open_dataset, isodate
+from .utils import safe_open_dataset, parse_isodate
 
 # --- Public API ---
 __all__ = [
@@ -387,8 +387,8 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
     )
     ax = axes.flat
 
-    t_start = isodate(ds.time_coverage_start)
-    t_end = isodate(ds.time_coverage_end)
+    t_start = parse_isodate(ds.time_coverage_start)
+    t_end = parse_isodate(ds.time_coverage_end)
 
     u_velocity = ds["speed_u_component"].values
     v_velocity = ds["speed_v_component"].values
