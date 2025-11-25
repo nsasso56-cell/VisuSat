@@ -40,33 +40,39 @@ import numpy as np
 
 
 # --- Third-party imports (wrapped in try/except so documentation builds gracefully) ---
-try:
-    import cartopy.crs as ccrs
-    from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-except Exception:  
-    ccrs = None
-    LongitudeFormatter = None
-    LatitudeFormatter = None
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-except Exception:  
-    matplotlib = None
-    plt = None
-    make_axes_locatable = None
+def _require_matplotlib():
+    """Raise an error if matplotlib is missing."""
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+    except Exception:  
+        raise ImportError("Matplotlib is required for geographic plotting.")
+    return matplotlib, plt, make_axes_locatable
+
+def _require_cartopy():
+    """Raise an error if cartopy is missing."""
+    try:
+        import cartopy.crs as ccrs
+        import cartopy.feature as cfeature
+    except ImportError:
+        raise ImportError("Cartopy is required for geographic plotting.")
+    return ccrs, cfeature
+
 
 
 # --- Local dependencies ---
-from visusat import utils
+from .utils import safe_open_dataset, isodate
 
-# --- Matplotlib config (conditional) ---
-if matplotlib is not None:
-    matplotlib.rcParams["figure.dpi"] = 200
-    matplotlib.rcParams.update(
-        {"text.usetex": False, "font.family": "serif", "font.size": 10}
-    )
+# --- Public API ---
+__all__ = [
+    "get_token",
+    "load_data",
+    "customisation",
+    "plot_radiances",
+    "plot_amvs",
+]
 
 # -- Logger ---
 logger = logging.getLogger(__name__)
@@ -99,7 +105,7 @@ def get_token(credentials_path: Path = DEFAULT_CREDENTIALS_PATH):
     return token
 
 
-def download_data(
+def load_data(
     collection_id,
     start_time,
     end_time,
@@ -263,7 +269,7 @@ def customisation(product, chain):
     return savepath, customisation
 
 
-def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=False):
+def plot_radiances(filename, collection_id, outfile=None, savefig=True, display=False):
     """
     Plot mean radiance fields from an EUMETSAT FCI AllSkyRadiance NetCDF product.
 
@@ -294,13 +300,15 @@ def plot_radiance(filename, collection_id, outfile=None, savefig=True, display=F
         The function creates and optionally saves a figure but does not 
         return any object.
     """
+    # --- Graphic imports ---
+    matplotlib, plt, make_axes_locatable = _require_matplotlib()
 
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", collection_id)
         os.makedirs(outdir, exist_ok=True)
         outfile = os.path.join(outdir, Path(filename).stem + ".png")
 
-    ds = utils.safe_open_dataset(filename)
+    ds = safe_open_dataset(filename)
 
     arr = ds["radiance_mean"].values
     logger.info(f"All NaN ? -> {np.isnan(arr).all()}")
@@ -359,13 +367,17 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         The function generates and optionally saves a figure, but does not 
         return an object.
     """
+    # --- Graphic imports ---
+    matplotlib, plt, make_axes_locatable = _require_matplotlib()
+    ccrs, cfeature = _require_cartopy()
+
     prefix = ""
     if outfile is None:
         outdir = os.path.join(project_root, "outputs", product.collection_id)
         os.makedirs(outdir, exist_ok=True)
         outfile = os.path.join(outdir, "map_uv_" + Path(filename).stem + ".png")
 
-    ds = utils.safe_open_dataset(filename)
+    ds = safe_open_dataset(filename)
 
     fig, axes = plt.subplots(
         nrows=1,
@@ -375,8 +387,8 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
     )
     ax = axes.flat
 
-    t_start = utils.isodate(ds.time_coverage_start)
-    t_end = utils.isodate(ds.time_coverage_end)
+    t_start = isodate(ds.time_coverage_start)
+    t_end = isodate(ds.time_coverage_end)
 
     u_velocity = ds["speed_u_component"].values
     v_velocity = ds["speed_v_component"].values
