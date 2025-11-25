@@ -53,7 +53,7 @@ except Exception:
     copernicusmarine = None  # allows docs to build without the library
 
 # --- Local utilities ---
-from .utils import safe_open_dataset, escape_latex, check_velocity_cop, isodate
+from .utils import safe_open_dataset, escape_latex, detect_velocity_vars, parse_isodate
 from .plotting import plot_field
 
 # --- Public API ---
@@ -288,7 +288,7 @@ def plot_fields(request: CopernicusRequest, ds: xr.Dataset):
         da = ds[var].squeeze()
         longname = escape_latex(getattr(da, "long_name", var))
         shortname = getattr(da, "short_name", var)
-        isotime = isodate(da.time.values)
+        isotime = parse_isodate(da.time.values)
         logger.info(f"Plotting variable '{var}' ({longname}) at {isotime}.")
 
         lon = da.longitude.values
@@ -325,7 +325,7 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
         to determine the output directory for the generated figures.
     ds : xarray.Dataset
         The dataset containing velocity components. The function automatically
-        detects the velocity variable names via ``utils.check_velocity_cop``.
+        detects the velocity variable names via ``utils.detect_velocity_vars``.
         Expected dimensions: ``time``, ``depth``, ``latitude``, ``longitude``.
     domain : list of float, optional
         Geographic subdomain specified as ``[lon_min, lon_max, lat_min, lat_max]``.
@@ -343,7 +343,7 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
     -----
     - A separate PNG file is produced for each combination of time and depth.
     - Velocity components are automatically identified using
-      ``utils.check_velocity_cop()``.
+      ``utils.detect_velocity_vars()``.
     - Depth and time values are embedded into the output filename.
     """
     plt, make_axes_locatable = _require_matplotlib()
@@ -358,7 +358,7 @@ def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
             suffix = ""
             # Check velocity variables
             try:
-                u_var, v_var = check_velocity_cop(ds)
+                u_var, v_var = detect_velocity_vars(ds)
                 u = ds[u_var][i, j, :, :].values
                 v = ds[v_var][i, j, :, :].values
             except KeyError as e:
