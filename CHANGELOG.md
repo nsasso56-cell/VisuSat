@@ -45,6 +45,22 @@ Added sphinx documentation scaffold
 
 ### [Unreleased]
 
+## [0.3.1] - 2025-11-25
 
+### [Fixed]
+- Standardized function names across modules. 
+- Fixed inconsistencies in plotting routines after 
+- Adapt new modules to lazy-importing heavy dependencies for ReadTheDocs. 
+
+### [Changed]
+- Reorganised imports to follow VisuSat coding standards.
+- Linting and formatting of package modules and examples scripts. 
+
+### [Documentation]
+- Updated examples scripts to fit nex API names.
+- New README.md installation instructions (`pip install visusat`)
+- Added missing modules references.
+- New installation instructions in ReadTheDocs documentation (installation.rst).
+- Fix minor ReadTheDocs inconsistencies. 
 
 

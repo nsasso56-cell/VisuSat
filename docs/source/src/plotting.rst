@@ -1,5 +1,5 @@
-Plotting utilities
-==================
+plotting module
+===============
 
 .. automodule:: visusat.plotting
    :members:

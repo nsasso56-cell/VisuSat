@@ -13,7 +13,24 @@ Prerequisites
 Install VisuSat
 ---------------
 
-Clone the repository and install dependencies:
+VisuSat is available on PyPl:
+
+.. code-block:: bash
+
+   pip install visusat
+
+This will directly install visusat as a Python package with required dependencies.
+
+Verify the installation:
+
+.. code-block:: bash
+
+   python -c "import visusat; print(visusat.__version__)"
+
+Development installation
+------------------------
+
+You can also install Visusat as a GitHub project for development : 
 
 .. code-block:: bash
 

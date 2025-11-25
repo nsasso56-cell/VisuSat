@@ -1,6 +1,6 @@
 [project]
 name = "visusat"
-version = "0.2.0"
+version = "0.3.1"
 description = "Satellite data visualisation toolkit for EUMETSAT and Copernicus Marine datasets."
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "Nicolas Sasso" , email = "n.sasso56@gmail.com"}]
@@ -52,8 +52,6 @@ Documentation = "https://visusat.readthedocs.io"
 Source = "https://github.com/nsasso56-cell/VisuSat"
 Issues = "https://github.com/nsasso56-cell/VisuSat/issues"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

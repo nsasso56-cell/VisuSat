@@ -51,27 +51,28 @@ Product: [GLOBAL_ANALYSISFORECAST_PHY_001_024](https://data.marine.copernicus.eu
 
 # 🚀 Installation :
 
-Clone the repository an install dependencies in virtual environnement :
+VisuSat is available on PyPI:
+
+```bash
+pip install visusat
+```
+
+For devellopment :
 
 ```bash
 git clone https://github.com/nsasso56-cell/VisuSat
 cd VisuSat
-uv sync
-```
-
-Or install with pip :
-
-```bash
-pip install requirements.txt
-```
-
-Or installe the package in editable mode :
-
-```bash
 pip install -e .
 ```
 
+## 🔧 Upgrade VisuSat
+
+```bash
+pip install --upgrade visusat
+```
+
 ---
+
 # 💡 Quick Start Examples
 
 Here is a minimal example showing how to download and plot a Copernicus Marine dataset:
@@ -91,13 +92,13 @@ request = copernicus.CopernicusRequest(
     output_filename="duacs_sla.nc",
 )
 
-ds = copernicus.get_copdataset(request)
+ds = copernicus.load_dataset(request, force=False)
 
 # Plot all fields
-copernicus.plot_copdataset(request, ds)
+copernicus.plot_fields(request, ds)
 
 # Plot surface currents
-copernicus.plot_currents(request, ds, vectors=False)
+copernicus.plot_currents(request, ds, vectors = False)
 ```
 
 More examples are available in the examples/ folder.
@@ -126,6 +127,7 @@ VisuSat/
 │       ├── copernicus.py
 │       ├── eumetsat.py
 │       ├── utils.py
+│       ├── plotting.py
 │       └── eumetsat_products_registry.py
 ├── docs/
 │   └── source/
