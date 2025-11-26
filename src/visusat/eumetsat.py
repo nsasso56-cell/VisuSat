@@ -109,7 +109,7 @@ def load_data(
     collection_id,
     start_time,
     end_time,
-    last=False,
+    first=False,
     output_file=None,
 ):
     """
@@ -153,9 +153,9 @@ def load_data(
     )
     results = collection.search(dtstart=start_time, dtend=end_time)
 
-    if last:
-        logger.info("last = True : Selection of only last product (more recent).")
-        products = list(results)[:1]  # Select only last product
+    if first:
+        logger.info("first = True : Selection of only first product (more recent).")
+        products = [results.first()]  # Select only first product
 
     outfiles = []
 
