@@ -25,19 +25,6 @@ import numpy as np
 from visusat.eumetsat import download_custom_products, get_token
 from visusat.plotting import animate_geotiff_sequence
 
-
-def get_lonlat(ds):
-    """Return 2D lon/lat arrays from a rioxarray dataset."""
-    bounds = ds.rio.bounds()
-    minx, miny, maxx, maxy = bounds
-    ny, nx = ds.shape[-2:]
-
-    lon = np.linspace(minx, maxx, nx)
-    lat = np.linspace(miny, maxy, ny)
-    lon2d, lat2d = np.meshgrid(lon, lat)
-    return lon2d, lat2d, [minx, maxx, miny, maxy]
-
-
 # ---------------------------------------------------------------------------
 # Logging configuration
 # ---------------------------------------------------------------------------
