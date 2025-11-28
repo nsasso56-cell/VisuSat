@@ -6,8 +6,6 @@ Cartopy/Matplotlib dependencies do not pollute data-access modules
 (Copernicus, EUMETSAT, …).
 """
 
-
-
 from __future__ import annotations
 
 # --- Standard library ---
@@ -16,9 +14,9 @@ import os
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
-
-import rioxarray
 import numpy as np
+import rioxarray
+
 from .utils import parse_isodate
 
 __all__ = [
@@ -29,6 +27,7 @@ __all__ = [
 # --- Logger ---
 logger = logging.getLogger(__name__)
 
+
 def _require_matplotlib():
     try:
         import matplotlib.pyplot as plt
@@ -37,12 +36,14 @@ def _require_matplotlib():
         raise ImportError("Matplotlib is required for plotting.")
     return plt, make_axes_locatable
 
+
 def _require_animation():
     try:
         import matplotlib.animation as animation
     except ImportError:
         raise ImportError("Matplotlib.Animation is required for plotting.")
     return animation
+
 
 def _require_cartopy():
     try:
@@ -52,13 +53,14 @@ def _require_cartopy():
         raise ImportError("Cartopy is required for plotting maps.")
     return ccrs, cfeature
 
+
 def animate_geotiff_sequence(
     directory: str,
     *,
     cmap: str = "gray",
     fps: int = 2,
     outfile: str = "animation.gif",
-    figsize: Tuple = (7,7),
+    figsize: Tuple = (7, 7),
     percentile_clip: Tuple = (1, 99),
     projection: Optional["ccrs.Projection"] = None,
 ) -> Path:
@@ -92,7 +94,7 @@ def animate_geotiff_sequence(
     plt, make_axes_locatable = _require_matplotlib()
     animation = _require_animation()
     ccrs, cfeature = _require_cartopy()
-    
+
     directory = Path(directory)
 
     # -------------------------------
@@ -101,9 +103,10 @@ def animate_geotiff_sequence(
     geotiffs = [f for f in Path(directory).iterdir() if f.suffix == ".tif"]
 
     def extract_timestamp(file):
-            # file pattern: NAME_YYYYMMDDhhmmss_YYYYMMDDhhmmss.tif
-            parts = file.stem.split("_")
-            return parse_isodate(parts[1])
+        # file pattern: NAME_YYYYMMDDhhmmss_YYYYMMDDhhmmss.tif
+        parts = file.stem.split("_")
+        return parse_isodate(parts[1])
+
     geotiffs.sort(key=extract_timestamp)
 
     # -------------------------------
@@ -114,7 +117,7 @@ def animate_geotiff_sequence(
     if fill_value is not None:
         first = first.where(first != fill_value)
 
-    #lon2d, lat2d, extent = get_lonlat(first)
+    # lon2d, lat2d, extent = get_lonlat(first)
 
     # --- Get transform + extent ---
     transform = first.rio.transform()
@@ -137,8 +140,8 @@ def animate_geotiff_sequence(
         fill_value = tmp.attrs.get("_FillValue", None)
         if fill_value is not None:
             tmp = tmp.where(tmp != fill_value)
-        vmin = min(vmin, float(np.nanpercentile(tmp,percentile_clip[0])))
-        vmax = max(vmax, float(np.nanpercentile(tmp,percentile_clip[1])))
+        vmin = min(vmin, float(np.nanpercentile(tmp, percentile_clip[0])))
+        vmax = max(vmax, float(np.nanpercentile(tmp, percentile_clip[1])))
 
     # -------------------------------
     # Setup figure for animation
@@ -147,13 +150,23 @@ def animate_geotiff_sequence(
     if projection is None:
         projection = ccrs.PlateCarree()
 
-    fig, ax = plt.subplots(subplot_kw={"projection":projection}, figsize=figsize)
+    fig, ax = plt.subplots(subplot_kw={"projection": projection}, figsize=figsize)
     ax.set_extent(extent, crs=projection)
 
-    im = ax.imshow(first, cmap=cmap, transform=projection, extent=extent, origin="upper", vmin=vmin, vmax=vmax)
+    im = ax.imshow(
+        first,
+        cmap=cmap,
+        transform=projection,
+        extent=extent,
+        origin="upper",
+        vmin=vmin,
+        vmax=vmax,
+    )
 
     # --- Colorbar ---
-    cbar = fig.colorbar(im, ax=ax, orientation="horizontal", pad=0.07, fraction=0.046, aspect=30)
+    cbar = fig.colorbar(
+        im, ax=ax, orientation="horizontal", pad=0.07, fraction=0.046, aspect=30
+    )
     cbar.set_label(f"{first.long_name}\n({first.unit})")
 
     # --- Cosmetics ---
@@ -163,13 +176,9 @@ def animate_geotiff_sequence(
     ax.set_xlabel("Longitude (°)")
     ax.set_ylabel("Latitude (°)")
     gl = ax.gridlines(
-        draw_labels=True,
-        linewidth=0.6,
-        color="gray",
-        alpha=1,
-        linestyle="--"
+        draw_labels=True, linewidth=0.6, color="gray", alpha=1, linestyle="--"
     )
-    gl.top_labels = False    
+    gl.top_labels = False
     gl.right_labels = False
 
     title = ax.set_title("Loading...")
@@ -180,7 +189,7 @@ def animate_geotiff_sequence(
     # --------------------------
     def update(i):
         tif = geotiffs[i]
-        
+
         arr = rioxarray.open_rasterio(tif).isel(band=0)
         if fill_value is not None:
             arr = arr.where(arr != fill_value)
@@ -197,20 +206,17 @@ def animate_geotiff_sequence(
         return [im, title]
 
     ani = animation.FuncAnimation(
-        fig, update, frames=len(geotiffs),
-        blit=False, interval=300
+        fig, update, frames=len(geotiffs), blit=False, interval=300
     )
 
     # --------------------------
     # Save animation
     # --------------------------
     outfile = Path(directory) / outfile
-    ani.save(outfile, fps=2, dpi=200, writer='Pillow')
+    ani.save(outfile, fps=2, dpi=200, writer="Pillow")
     logger.info(f"Animation saved -> {outfile}")
 
     return outfile
-
-
 
 
 # -----------------------------------------------------------------------------
@@ -223,10 +229,10 @@ def plot_field(
     *,
     title: str = "",
     subdomain: Optional[Sequence[float]] = None,
-    cmap : str = "Spectral_r",
-    cbar_label:str = "unknown",
+    cmap: str = "Spectral_r",
+    cbar_label: str = "unknown",
     figsize: tuple = (12, 6),
-    dpi : int = 200, 
+    dpi: int = 200,
     proj=None,
     show_coastlines: bool = True,
     show_borders: bool = True,
@@ -301,7 +307,7 @@ def plot_field(
             f"latitude ({lat.shape}) and longitude ({lon.shape})"
         )
 
-    if proj is None :
+    if proj is None:
         proj = ccrs.PlateCarree()
 
     logger.info(f"Plot figure with field {title}.")
@@ -342,7 +348,7 @@ def plot_field(
             cfeature.RIVERS.with_scale("10m"), linewidth=0.3, edgecolor="lightblue"
         )
 
-    # --- Titles --- 
+    # --- Titles ---
     if title:
         fig.suptitle(title)
 
@@ -356,5 +362,3 @@ def plot_field(
         logger.info("-> Figure saved in {savepath}.")
 
     return fig, ax
-
-

@@ -24,6 +24,7 @@ The main features include:
 This module centralizes all interactions with EUMETSAT services to ensure
 consistent, robust, and reproducible satellite data workflows.
 """
+
 from __future__ import annotations
 
 # --- Standard library imports ---
@@ -42,15 +43,17 @@ import numpy as np
 
 # --- Third-party imports (wrapped in try/except so documentation builds gracefully) ---
 
+
 def _require_matplotlib():
     """Raise an error if matplotlib is missing."""
     try:
         import matplotlib
         import matplotlib.pyplot as plt
         from mpl_toolkits.axes_grid1 import make_axes_locatable
-    except Exception:  
+    except Exception:
         raise ImportError("Matplotlib is required for geographic plotting.")
     return matplotlib, plt, make_axes_locatable
+
 
 def _require_cartopy():
     """Raise an error if cartopy is missing."""
@@ -60,6 +63,7 @@ def _require_cartopy():
     except ImportError:
         raise ImportError("Cartopy is required for geographic plotting.")
     return ccrs, cfeature
+
 
 # --- Local dependencies ---
 from .utils import safe_open_dataset, parse_isodate
@@ -80,6 +84,7 @@ logger = logging.getLogger(__name__)
 # --- Project paths ---
 project_root = Path(__file__).resolve().parent.parent.parent
 DEFAULT_CREDENTIALS_PATH = Path.home() / ".config" / "visusat" / "id_EUMETSAT.json"
+
 
 def get_token(credentials_path: Path = DEFAULT_CREDENTIALS_PATH):
     """
@@ -192,10 +197,11 @@ def load_data(
 
     return outfiles
 
+
 def download_custom_products(
-        products: List[eumdac.product],
-        chain: eumdac.tailor_models.Chain,
-        directory: str,
+    products: List[eumdac.product],
+    chain: eumdac.tailor_models.Chain,
+    directory: str,
 ):
     """
     Download a series of EUMETSAT products according to a specific Data Tailor chain.
@@ -207,12 +213,12 @@ def download_custom_products(
     chain : datetime
         Data tailor chain for customisation.
     directory : str
-        Output directory for generated files. 
+        Output directory for generated files.
 
     Example
     --------
     Download series of MTG FCI L1c HighRes effective radiance (requires EUMETSAT Data Store credentials):
-    
+
     >>> import eumdac
     >>> from datetime import datetime
     >>> from visusat.eumetsat import get_token
@@ -240,19 +246,24 @@ def download_custom_products(
         sensingstart = product.sensing_start.strftime("%Y%m%d%H%M%S")
         sensingend = product.sensing_end.strftime("%Y%m%d%H%M%S")
 
-        filepath = os.path.join(directory, f"{chain.product}_{sensingstart}_{sensingend}_{ip}.tif")
+        filepath = os.path.join(
+            directory, f"{chain.product}_{sensingstart}_{sensingend}_{ip}.tif"
+        )
         if os.path.exists(filepath):
-            if os.path.getsize(filepath)>0:
+            if os.path.getsize(filepath) > 0:
                 logger.info(f"File already saved : {filepath}. Ignore download")
                 continue
-        
+
         # --- ustomisation ---
-        logger.info(f"Launching customisation request product {ip+1}/{len(products)}...")
+        logger.info(
+            f"Launching customisation request product {ip+1}/{len(products)}..."
+        )
         output_file, custom = customisation(product, chain)
 
         # --- Copy producted Tiff in target directory ---
         shutil.copyfile(output_file, filepath)
         logger.info(f"File saved in {filepath}")
+
 
 def customisation(product, chain):
     """
@@ -331,12 +342,12 @@ def customisation(product, chain):
 
 
 def plot_radiances(
-        filename,
-        collection_id,
-        *,
-        outfile: Optional[str]=None, 
-        savefig: bool = True, 
-        display : bool = False
+    filename,
+    collection_id,
+    *,
+    outfile: Optional[str] = None,
+    savefig: bool = True,
+    display: bool = False,
 ):
     """
     Plot mean radiance fields from an EUMETSAT FCI AllSkyRadiance NetCDF product.
@@ -365,7 +376,7 @@ def plot_radiances(
     Returns
     -------
     None
-        The function creates and optionally saves a figure but does not 
+        The function creates and optionally saves a figure but does not
         return any object.
     """
     # --- Graphic imports ---
@@ -406,7 +417,7 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
 
     This function loads the AMV dataset, extracts the zonal (u) and meridional (v)
     wind components, and visualises them as scatter plots on a map using a
-    Plate Carrée projection. Two subplots are generated: one for the zonal 
+    Plate Carrée projection. Two subplots are generated: one for the zonal
     component and one for the meridional component. A zoomed domain can be
     specified via the ``box`` argument.
 
@@ -432,7 +443,7 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
     Returns
     -------
     None
-        The function generates and optionally saves a figure, but does not 
+        The function generates and optionally saves a figure, but does not
         return an object.
     """
     # --- Graphic imports ---
@@ -505,8 +516,6 @@ def plot_amvs(filename, product, box=None, outfile=None, savefig=True, display=F
         # add these before plotting
         gl.top_labels = False  # suppress top labels
         gl.right_labels = False  # suppress right labels
-        gl.xformatter = LongitudeFormatter
-        gl.yformatter = LatitudeFormatter
 
     if box is not None:
         logger.info(f"Zoom on box {box}.")

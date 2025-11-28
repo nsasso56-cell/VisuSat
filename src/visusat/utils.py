@@ -7,7 +7,7 @@ Utility functions for consistent and robust handling of satellite and oceanograp
 This module provides a collection of helper routines used across the VisuSat
 package. These utilities include:
 
-- Safe opening of NetCDF files using several possible backends 
+- Safe opening of NetCDF files using several possible backends
   (``safe_open_dataset``),
 - Conversion of compact timestamp strings into ISO 8601 format (``parse_isodate``),
 - Detection of velocity component variable names in Copernicus Marine datasets
@@ -20,20 +20,22 @@ The goal of this module is to centralize small but essential operations to keep
 the rest of the codebase clean, consistent, and resilient across various data
 sources (EUMETSAT, CMEMS, CDSAPI, etc.).
 """
+
 from __future__ import annotations
 
-# --- Standard Library --- 
+# --- Standard Library ---
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
-# --- Madantory third-party dependencies --- 
+# --- Madantory third-party dependencies ---
 import numpy as np
 import pandas as pd
 
+
 # --- Optional heavy dependencies (imported safely for RTD and minimal installs) ---
-def _require_xarray():    
+def _require_xarray():
     try:
         import xarray as xr
     except ImportError as exc:
@@ -42,13 +44,17 @@ def _require_xarray():
         ) from exc
     return xr
 
+
 def _require_matplotlib():
     try:
         import matplotlib
         import matplotlib.pyplot as plt
-    except ImportError as exc:  
-        raise ImportError("Matplotlib is required for plotting in visusat.utils.") from exc
+    except ImportError as exc:
+        raise ImportError(
+            "Matplotlib is required for plotting in visusat.utils."
+        ) from exc
     return matplotlib, plt
+
 
 # --- Logger ---
 logger = logging.getLogger(__name__)
@@ -64,6 +70,7 @@ __all__ = [
 
 # --- Project paths ---
 project_root = Path(__file__).resolve().parent.parent.parent
+
 
 # ------------------------------------------------------------------------------
 # STRING UTILITIES
@@ -90,9 +97,11 @@ def escape_latex(text: str) -> str:
     """
     return text.replace("%", "\%")
 
+
 # ------------------------------------------------------------------------------
 # TIME UTILITIES
 # ------------------------------------------------------------------------------
+
 
 def parse_isodate(date) -> str:
     """
@@ -150,12 +159,14 @@ def parse_isodate(date) -> str:
                 pass
 
         raise ValueError(f"Unrecognized date string format: {date}")
-    
+
     raise TypeError(f"Unsupported date type: {type(date)}")
+
 
 # ------------------------------------------------------------------------------
 # DATASET LOADING
 # ------------------------------------------------------------------------------
+
 
 def safe_open_dataset(path: str | Path):
     """
@@ -208,20 +219,21 @@ def safe_open_dataset(path: str | Path):
         except Exception as e:
             logger.warning(f" Fail with engine '{engine}': {e}")
 
-    raise RuntimeError(f"Could not open dataset {path}. No compatible backend for this file.")
-
-
+    raise RuntimeError(
+        f"Could not open dataset {path}. No compatible backend for this file."
+    )
 
 
 # ------------------------------------------------------------------------------
 # COPERNICUS / OCEAN VELOCITY UTILITIES
 # ------------------------------------------------------------------------------
 
+
 def detect_velocity_vars(ds: "xr.Dataset") -> Tuple[str, str]:
     """
     Detect available ocean velocity components in a Copernicus Marine dataset.
 
-    The function inspects the dataset to determine whether a valid pair of 
+    The function inspects the dataset to determine whether a valid pair of
     horizontal velocity variables is present. Several common CMEMS conventions
     are checked, including:
 
@@ -229,7 +241,7 @@ def detect_velocity_vars(ds: "xr.Dataset") -> Tuple[str, str]:
     - ``("uo", "vo")`` : total ocean currents from reanalyses or models
     - ``("eastward_velocity", "northward_velocity")`` : alternative naming
 
-    The first matching pair is returned. If no valid pair is found, a 
+    The first matching pair is returned. If no valid pair is found, a
     ``KeyError`` is raised with a list of available variables.
 
     Parameters
@@ -251,7 +263,7 @@ def detect_velocity_vars(ds: "xr.Dataset") -> Tuple[str, str]:
     Notes
     -----
     This helper function is mainly used by plotting routines to ensure that
-    the correct velocity fields are extracted regardless of dataset naming 
+    the correct velocity fields are extracted regardless of dataset naming
     conventions.
     """
     possible_pairs = [
@@ -264,17 +276,17 @@ def detect_velocity_vars(ds: "xr.Dataset") -> Tuple[str, str]:
         if u_var in ds and v_var in ds:
             logging.info(f"Velocity variables detected : {u_var}, {v_var}")
             return u_var, v_var
-        
+
     valid_vars = ", ".join(ds.data_vars)
-    raise KeyError(f"Missing velocitty variables in dataset. Available variable : {valid_vars}.")
-
-
+    raise KeyError(
+        f"Missing velocitty variables in dataset. Available variable : {valid_vars}."
+    )
 
 
 # ------------------------------------------------------------------------------
 # STATISTICS / DIAGNOSTICS
 # ------------------------------------------------------------------------------
-def plot_dataset_stats(data: "xr.DataArray", cmap : str = "viridis"):
+def plot_dataset_stats(data: "xr.DataArray", cmap: str = "viridis"):
     """
     Compute and display basic statistical histograms for a geospatial dataset.
 
@@ -330,14 +342,12 @@ def plot_dataset_stats(data: "xr.DataArray", cmap : str = "viridis"):
     low, high = np.nanpercentile(data, [1, 99])
     filtered = data.where((data >= low) & (data <= high))
 
-    # --- 1D Histogram --- 
+    # --- 1D Histogram ---
     filtered.plot.hist(bins=50)
 
-    # --- 2D Longitude vs Value --- 
-    if {"x", "y"}.issubset(filtered.coords):   
-        LON, LAT = np.meshgrid(
-            filtered.x.values.flatten(), filtered.y.values.flatten()
-        )
+    # --- 2D Longitude vs Value ---
+    if {"x", "y"}.issubset(filtered.coords):
+        LON, LAT = np.meshgrid(filtered.x.values.flatten(), filtered.y.values.flatten())
         val = filtered.values.flatten()
 
         mask = ~np.isnan(val)
