@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import rioxarray
 
 from visusat import eumetsat, utils
-from visusat.eumetsat_products_registry import load_registry, PRODUCTS
+from visusat.eumetsat_products_registry import PRODUCTS, load_registry
 
 # ===============================================================
 # Logging configuration
@@ -32,13 +32,11 @@ from visusat.eumetsat_products_registry import load_registry, PRODUCTS
 LOG_FILE = Path(__file__).with_suffix(".log")
 script_name = os.path.basename(__file__)
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s",
     handlers=[
-        logging.FileHandler(
-            LOG_FILE, encoding="utf-8", mode="w"
-        ),
-        logging.StreamHandler(sys.stdout),  
+        logging.FileHandler(LOG_FILE, encoding="utf-8", mode="w"),
+        logging.StreamHandler(sys.stdout),
     ],
     force=True,
 )
@@ -47,7 +45,7 @@ logger.info("Program launched.")
 
 # Collection required :
 load_registry()
-required_collection = "EO:EUM:DAT:0665" 
+required_collection = "EO:EUM:DAT:0665"
 product = PRODUCTS[required_collection]
 
 # ===============================================================

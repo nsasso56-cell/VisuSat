@@ -5,6 +5,9 @@
 # -- Include source code --
 recursive-include src *.py
 
+# --- Include VisuSat logo ---
+recursive-include docs/source/_static *
+
 # -- Include package metadata --
 include pyproject.toml
 include README.md

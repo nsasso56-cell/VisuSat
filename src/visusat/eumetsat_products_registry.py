@@ -19,6 +19,7 @@ Notes
 - Users must explicitly call :func:`register_product` to add entries.
 - The JSON file is stored at ``data/eumetsat_products.json``.
 """
+
 # --- Standard library ---
 import json
 import logging
@@ -38,6 +39,7 @@ REGISTRY_PATH = Path(
         Path(__file__).resolve().parent.parent.parent, "data", "eumetsat_products.json"
     )
 )
+
 
 # ---------------------------------------------------------------------------
 # Product dataclass
@@ -60,6 +62,7 @@ class Product:
     description : str, optional
         Longer textual description.
     """
+
     collection_id: str
     name: str
     level: str
@@ -101,8 +104,9 @@ def save_registry() -> None:
             indent=2,
             ensure_ascii=False,
         )
-    
+
     logger.info("EUMETSAT registry saved.")
+
 
 # ---------------------------------------------------------------------------
 # Main API
@@ -131,6 +135,7 @@ def register_product(product: Product) -> None:
 # ---------------------------------------------------------------------------
 # Optional example functions
 # ---------------------------------------------------------------------------
+
 
 def example_registry_entry() -> Product:
     """
