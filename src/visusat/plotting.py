@@ -213,7 +213,7 @@ def animate_geotiff_sequence(
     # Save animation
     # --------------------------
     outfile = Path(directory) / outfile
-    ani.save(outfile, fps=2, dpi=200, writer="Pillow")
+    ani.save(outfile, fps=2, dpi=50, writer="Pillow")
     logger.info(f"Animation saved -> {outfile}")
 
     return outfile
