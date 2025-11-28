@@ -3,6 +3,9 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 sys.path.insert(0, ROOT)
 
+html_static_path = ["_static"]
+html_logo = "_static/logo_visusat.png"
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
