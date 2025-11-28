@@ -126,6 +126,7 @@ More examples are available in the examples/ folder.
 - High-level wrappers for Copernicus Marine API
 - Automation of EUMETSAT Data Tailor workflows
 - Built-in plotting functions (AMVs, radiances, currents…)
+- Utilities for generating animated visualizations of satellite data.
 - Dataset registry and metadata helpers
 - Strong logging system
 - Full Sphinx documentation (ReadTheDocs)
@@ -150,6 +151,7 @@ VisuSat/
 ├── examples/
 │   ├── demo_copernicus_globmodel.py
 │   ├── demo_eumetsat_datatailor.py
+│   ├── demo_eumetsat_animation.py
 │   └── images/
 └── data/
     ├── copernicus/
