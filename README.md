@@ -60,7 +60,7 @@ Effective radiance from Visible 0.6µm channel, over Western Europe, between 12U
 Product : [FCI L1c High Resolution Image Data - MTG](https://data.eumetsat.int/product/EO:EUM:DAT:0665)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/fix/documentation/examples/images/animation_small.gif" width="420">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/animation_small.gif" width="420">
 </p>
 
 ---
