@@ -6,15 +6,25 @@ Cartopy/Matplotlib dependencies do not pollute data-access modules
 (Copernicus, EUMETSAT, …).
 """
 
+
+
 from __future__ import annotations
 
 # --- Standard library ---
 import logging
+import os
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 
+import rioxarray
 import numpy as np
+from .utils import parse_isodate
+
+__all__ = [
+    "plot_field",
+    "animate_geotiff_sequence",
+]
 
 # --- Logger ---
 logger = logging.getLogger(__name__)
@@ -27,6 +37,12 @@ def _require_matplotlib():
         raise ImportError("Matplotlib is required for plotting.")
     return plt, make_axes_locatable
 
+def _require_animation():
+    try:
+        import matplotlib.animation as animation
+    except ImportError:
+        raise ImportError("Matplotlib.Animation is required for plotting.")
+    return animation
 
 def _require_cartopy():
     try:
@@ -35,6 +51,166 @@ def _require_cartopy():
     except ImportError:
         raise ImportError("Cartopy is required for plotting maps.")
     return ccrs, cfeature
+
+def animate_geotiff_sequence(
+    directory: str,
+    *,
+    cmap: str = "gray",
+    fps: int = 2,
+    outfile: str = "animation.gif",
+    figsize: Tuple = (7,7),
+    percentile_clip: Tuple = (1, 99),
+    projection: Optional["ccrs.Projection"] = None,
+) -> Path:
+    """
+    Create an animation (GIF/MP4) from a directory of GeoTIFF files.
+
+    Parameters
+    ----------
+    directory : str
+        Folder containing GeoTIFFs (all frames).
+    cmap : str
+        Matplotlib colormap.
+    fps : int
+        Frames per second in output animation.
+        Defaults to ``2``
+    outfile : str
+        Output filename (gif or mp4).
+    figsize : tuple
+        Size of the matplotlib figure.
+    percentile_clip : (pmin, pmax)
+        Percentile limits for global colorbar normalisation.
+    projection : cartopy.crs.Projection, optional
+        Defaults to ``"PlateCarree"``.
+
+    Returns
+    -------
+    Path
+        Path to the generated animation.
+    """
+
+    plt, make_axes_locatable = _require_matplotlib()
+    animation = _require_animation()
+    ccrs, cfeature = _require_cartopy()
+    
+    directory = Path(directory)
+
+    # -------------------------------
+    # List and sort files by timestamp
+    # -------------------------------
+    geotiffs = [f for f in Path(directory).iterdir() if f.suffix == ".tif"]
+
+    def extract_timestamp(file):
+            # file pattern: NAME_YYYYMMDDhhmmss_YYYYMMDDhhmmss.tif
+            parts = file.stem.split("_")
+            return parse_isodate(parts[1])
+    geotiffs.sort(key=extract_timestamp)
+
+    # -------------------------------
+    # Load first frame → setup CRS & extent
+    # -------------------------------
+    first = rioxarray.open_rasterio(os.path.join(directory, geotiffs[0])).isel(band=0)
+    fill_value = first.attrs.get("_FillValue", None)
+    if fill_value is not None:
+        first = first.where(first != fill_value)
+
+    #lon2d, lat2d, extent = get_lonlat(first)
+
+    # --- Get transform + extent ---
+    transform = first.rio.transform()
+    width = first.rio.width
+    height = first.rio.height
+
+    x_min = transform[2]
+    y_max = transform[5]
+    x_max = x_min + transform[0] * width
+    y_min = y_max + transform[4] * height
+    extent = [x_min, x_max, y_min, y_max]
+
+    # -------------------------------
+    # Compute global min/max (percentile clip)
+    # -------------------------------
+    vmin, vmax = np.inf, -np.inf
+    for f in geotiffs:
+        tmp = rioxarray.open_rasterio(os.path.join(directory, f)).isel(band=0)
+        # Replace FillValue by NaN if available
+        fill_value = tmp.attrs.get("_FillValue", None)
+        if fill_value is not None:
+            tmp = tmp.where(tmp != fill_value)
+        vmin = min(vmin, float(np.nanpercentile(tmp,percentile_clip[0])))
+        vmax = max(vmax, float(np.nanpercentile(tmp,percentile_clip[1])))
+
+    # -------------------------------
+    # Setup figure for animation
+    # -------------------------------
+    # --- Definition of projection ---
+    if projection is None:
+        projection = ccrs.PlateCarree()
+
+    fig, ax = plt.subplots(subplot_kw={"projection":projection}, figsize=figsize)
+    ax.set_extent(extent, crs=projection)
+
+    im = ax.imshow(first, cmap=cmap, transform=projection, extent=extent, origin="upper", vmin=vmin, vmax=vmax)
+
+    # --- Colorbar ---
+    cbar = fig.colorbar(im, ax=ax, orientation="horizontal", pad=0.07, fraction=0.046, aspect=30)
+    cbar.set_label(f"{first.long_name}\n({first.unit})")
+
+    # --- Cosmetics ---
+    ax.coastlines(resolution="50m")
+    ax.add_feature(cfeature.BORDERS)
+    ax.add_feature(cfeature.LAND, facecolor="lightgray")
+    ax.set_xlabel("Longitude (°)")
+    ax.set_ylabel("Latitude (°)")
+    gl = ax.gridlines(
+        draw_labels=True,
+        linewidth=0.6,
+        color="gray",
+        alpha=1,
+        linestyle="--"
+    )
+    gl.top_labels = False    
+    gl.right_labels = False
+
+    title = ax.set_title("Loading...")
+    fig.tight_layout()
+
+    # --------------------------
+    # Animation function
+    # --------------------------
+    def update(i):
+        tif = geotiffs[i]
+        
+        arr = rioxarray.open_rasterio(tif).isel(band=0)
+        if fill_value is not None:
+            arr = arr.where(arr != fill_value)
+
+        im.set_data(arr.values)
+
+        parts = tif.stem.split("_")
+        t1 = parse_isodate(parts[1])
+        t2 = parse_isodate(parts[2])
+
+        # Update title
+        title.set_text(f"{arr.description}\n{t1} -> {t2}")
+
+        return [im, title]
+
+    ani = animation.FuncAnimation(
+        fig, update, frames=len(geotiffs),
+        blit=False, interval=300
+    )
+
+    # --------------------------
+    # Save animation
+    # --------------------------
+    outfile = Path(directory) / outfile
+    ani.save(outfile, fps=2, dpi=200, writer='Pillow')
+    logger.info(f"Animation saved -> {outfile}")
+
+    return outfile
+
+
 
 
 # -----------------------------------------------------------------------------
@@ -135,7 +311,7 @@ def plot_field(
     ax = plt.axes(projection=proj)
     ax.set_global() if subdomain is None else ax.set_extent(subdomain)
     im = ax.pcolormesh(
-        lon, lat, val, transform=ccrs.PlateCarree(), cmap=cmap, shading="auto"
+        lon, lat, val, transform=ccrs.PlateCarree(), cmap=cmap, shading=shading
     )
 
     # --- Grid ---
@@ -153,7 +329,7 @@ def plot_field(
 
     # Coastlines, borders
     if show_coastlines:
-        ax.coastlines(resolution="110m", linewidth=0.6)
+        ax.coastlines(resolution=coast_resolution, linewidth=0.6)
     if show_borders:
         ax.add_feature(cfeature.BORDERS, linewidth=0.4)
 
@@ -182,6 +358,3 @@ def plot_field(
     return fig, ax
 
 
-__all__ = [
-    "plot_field",
-]
