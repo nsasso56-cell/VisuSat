@@ -33,7 +33,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 # --- Mandatory third-party dependencies ---
 import eumdac
@@ -193,11 +193,44 @@ def load_data(
     return outfiles
 
 def download_custom_products(
-        products: list(eumdac.product),
+        products: List[eumdac.product],
         chain: eumdac.tailor_models.Chain,
         directory: str,
 ):
+    """
+    Download a series of EUMETSAT products according to a specific Data Tailor chain.
 
+    Parameters
+    ----------
+    products : List[eumdac.products]
+        List of EUMETSAT products.
+    chain : datetime
+        Data tailor chain for customisation.
+    directory : str
+        Output directory for generated files. 
+
+    Example
+    --------
+    Download series of MTG FCI L1c HighRes effective radiance (requires EUMETSAT Data Store credentials):
+    
+    >>> import eumdac
+    >>> from datetime import datetime
+    >>> from visusat.eumetsat import get_token
+    >>> token = get_token()
+    >>> datastore = eumdac.DataStore(token)
+    >>> collection = datastore.get_collection(required_collection)
+    >>> start = datetime(2025, 10, 22, 12, 00)
+    >>> end = datetime(2025, 10, 22, 18, 00)
+    >>> products = collection.search(dtstart=start, dtend=end)
+    >>> chain = eumdac.tailor_models.Chain(
+    >>>     product="FCIL1HRFI",
+    >>>     format="geotiff",
+    >>>     filter={"bands": ["vis_06_hr_effective_radiance"]},
+    >>>     projection="geographic",
+    >>>     roi="western_europe")
+    >>> directory = "./test"
+    >>> download_custom_products(products, chain, directory)
+    """
     os.makedirs(directory, exist_ok=True)
 
     for ip, product in enumerate(products):
@@ -212,11 +245,12 @@ def download_custom_products(
             if os.path.getsize(filepath)>0:
                 logger.info(f"File already saved : {filepath}. Ignore download")
                 continue
-
+        
+        # --- ustomisation ---
         logger.info(f"Launching customisation request product {ip+1}/{len(products)}...")
         output_file, custom = customisation(product, chain)
 
-        # --- copy producted Tiff in movie dir ---
+        # --- Copy producted Tiff in target directory ---
         shutil.copyfile(output_file, filepath)
         logger.info(f"File saved in {filepath}")
 
