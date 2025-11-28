@@ -64,3 +64,23 @@ Added sphinx documentation scaffold
 - Fix minor ReadTheDocs inconsistencies. 
 
 
+## [0.4.0] - 2025-11-28
+
+### [Added]
+New function download_custom_products in eumetsat module :
+-  Cycle the download of a customisation on a series of products.
+- Rename them and put them in a specific directory under the format "FCIL1HRFI_20251022120006_20251022120923_35.tif". 
+New function animate_geotiff_sequence in plotting module :
+- Genrate an mp4 or. gif animation from the GeoTiff sequence in a directory.
+- Files in directory must have the format "FCIL1HRFI_20251022120006_20251022120923_35.tif". 
+- The frames are automatically sorted in chronological order, ensuring that the animation progresses forward in time. 
+
+- New example file demo_eumetsat_animation to demonstrate use of new functions.
+
+### [Changed]
+- Linting and formatting of example scripts and source files. 
+
+### [Documentation]
+- Added documentation for the new functions and new example script.
+- Added VisuSat logo in ReadTheDocs and README.
+
