@@ -33,6 +33,7 @@ import os
 import shutil
 import time
 from pathlib import Path
+from typing import Optional
 
 # --- Mandatory third-party dependencies ---
 import eumdac
@@ -60,8 +61,6 @@ def _require_cartopy():
         raise ImportError("Cartopy is required for geographic plotting.")
     return ccrs, cfeature
 
-
-
 # --- Local dependencies ---
 from .utils import safe_open_dataset, parse_isodate
 
@@ -69,6 +68,7 @@ from .utils import safe_open_dataset, parse_isodate
 __all__ = [
     "get_token",
     "load_data",
+    "download_custom_products",
     "customisation",
     "plot_radiances",
     "plot_amvs",
@@ -192,6 +192,33 @@ def load_data(
 
     return outfiles
 
+def download_custom_products(
+        products: list(eumdac.product),
+        chain: eumdac.tailor_models.Chain,
+        directory: str,
+):
+
+    os.makedirs(directory, exist_ok=True)
+
+    for ip, product in enumerate(products):
+
+        # --- Name properly the file ---
+        chainproduct = chain.product
+        sensingstart = product.sensing_start.strftime("%Y%m%d%H%M%S")
+        sensingend = product.sensing_end.strftime("%Y%m%d%H%M%S")
+
+        filepath = os.path.join(directory, f"{chain.product}_{sensingstart}_{sensingend}_{ip}.tif")
+        if os.path.exists(filepath):
+            if os.path.getsize(filepath)>0:
+                logger.info(f"File already saved : {filepath}. Ignore download")
+                continue
+
+        logger.info(f"Launching customisation request product {ip+1}/{len(products)}...")
+        output_file, custom = customisation(product, chain)
+
+        # --- copy producted Tiff in movie dir ---
+        shutil.copyfile(output_file, filepath)
+        logger.info(f"File saved in {filepath}")
 
 def customisation(product, chain):
     """
@@ -269,7 +296,14 @@ def customisation(product, chain):
     return savepath, customisation
 
 
-def plot_radiances(filename, collection_id, outfile=None, savefig=True, display=False):
+def plot_radiances(
+        filename,
+        collection_id,
+        *,
+        outfile: Optional[str]=None, 
+        savefig: bool = True, 
+        display : bool = False
+):
     """
     Plot mean radiance fields from an EUMETSAT FCI AllSkyRadiance NetCDF product.
 
