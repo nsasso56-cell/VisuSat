@@ -33,5 +33,12 @@
     "level": "L1c",
     "n_categories": 4,
     "description": "FCI Level 1c High Resolution Image Data - MTG - 0 degree"
+  },
+  "EO:EUM:DAT:0662": {
+    "collection_id": "EO:EUM:DAT:0662",
+    "name": "MTG-FCI Normal Resolution image - 0degree",
+    "level": "L1c",
+    "n_categories": 16,
+    "description": "FCI Level 1c Normal Resolution Image Data - MTG - 0 degree"
   }
 }

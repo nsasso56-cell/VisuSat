@@ -3,6 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
+.. image:: _static/logo_visusat.png
+   :alt: VisuSat logo
+   :align: center
+   :width: 250px
+
 VisuSat Documentation
 =====================
 
@@ -37,6 +43,7 @@ Copernicus Marine Service.
 
    examples/eumetsat_customisation
    examples/copernicus_global_model
+   examples/eumetsat_animation
 
 .. toctree::
    :maxdepth: 1

@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img src="docs/source/_static/logo_visusat.png" width="420">
+</p>
+
 # 🛰️ VisuSat project : 
 
 [![Documentation Status](https://readthedocs.org/projects/visusat/badge/?version=latest)](https://visusat.readthedocs.io/en/latest/)

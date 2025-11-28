@@ -31,16 +31,14 @@ from __future__ import annotations
 # --- Standard library ---
 import logging
 import os
-from pathlib import Path
-from typing import Dict, List, Optional
 from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional
 
 # --- Mandatory third-party dependencies ---
 import numpy as np
 import pandas as pd
 import xarray as xr
-
-
 
 try:
     import cdsapi
@@ -53,8 +51,8 @@ except Exception:
     copernicusmarine = None  # allows docs to build without the library
 
 # --- Local utilities ---
-from .utils import safe_open_dataset, escape_latex, detect_velocity_vars, parse_isodate
 from .plotting import plot_field
+from .utils import detect_velocity_vars, escape_latex, parse_isodate, safe_open_dataset
 
 # --- Public API ---
 __all__ = [
@@ -69,8 +67,9 @@ logger = logging.getLogger(__name__)
 
 # --- Project paths ---
 project_root = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = Path(os.path.join(project_root, "data","copernicus"))
+DATA_DIR = Path(os.path.join(project_root, "data", "copernicus"))
 OUT_DIR = Path(os.path.join(project_root, "outputs", "copernicus"))
+
 
 # ==============================================================================
 # Dataclass for request
@@ -144,6 +143,7 @@ class CopernicusRequest:
     ... )
     >>> req.fetch()
     """
+
     dataset_id: str
     variables: List[str]
     minimum_longitude: float
@@ -178,7 +178,7 @@ class CopernicusRequest:
         if filepath.exists() and not force:
             logger.info(f"File already exists → {filepath}, skipping download.")
             return filepath
-    
+
         request_kwargs = {
             "dataset_id": self.dataset_id,
             "variables": self.variables,
@@ -201,13 +201,14 @@ class CopernicusRequest:
         response = copernicusmarine.subset(**request_kwargs)
         output = response.filepaths[0]
         logger.info(f"Download complete → {output}")
-        
+
         return Path(output)
+
 
 # ==============================================================================
 # Dataset loader
 # ==============================================================================
-def load_dataset(request : CopernicusRequest, force : bool = False) -> xr.Dataset:
+def load_dataset(request: CopernicusRequest, force: bool = False) -> xr.Dataset:
     """
     Download and open a Copernicus Marine dataset as an ``xarray.Dataset``.
 
@@ -231,8 +232,11 @@ def load_dataset(request : CopernicusRequest, force : bool = False) -> xr.Datase
     """
     filepath = request.fetch(force)  # Download the data
     ds = safe_open_dataset(filepath)
-    logger.info(f"Dataset opened with dims {dict(ds.dims)} and vars {list(ds.data_vars)}")
+    logger.info(
+        f"Dataset opened with dims {dict(ds.dims)} and vars {list(ds.data_vars)}"
+    )
     return ds
+
 
 # ==============================================================================
 # PLOTS
@@ -260,6 +264,7 @@ def _require_cartopy():
 
 
 # ------------------------------------------------------------------------------
+
 
 def plot_fields(request: CopernicusRequest, ds: xr.Dataset):
     """
@@ -303,8 +308,14 @@ def plot_fields(request: CopernicusRequest, ds: xr.Dataset):
         savepath = outdir / f"{shortname}_{isotime}.png"
 
         logger.info(f"Plot {longname} at {isotime}.")
-        plot_field(lon, lat, val, title=f"{ds.title}.\n{longname} - {isotime}", cbar_label=cbar_label, savepath=savepath)
-        
+        plot_field(
+            lon,
+            lat,
+            val,
+            title=f"{ds.title}.\n{longname} - {isotime}",
+            cbar_label=cbar_label,
+            savepath=savepath,
+        )
 
 
 def plot_currents(request, ds: xr.Dataset, domain=None, vectors=False):
@@ -444,11 +455,11 @@ def get_cdsdataset(dataset, request):
     ----------
     dataset : str
         Identifier of the dataset hosted on the Copernicus Climate Data Store.
-        Examples include ``"reanalysis-era5-single-levels"`` or 
+        Examples include ``"reanalysis-era5-single-levels"`` or
         ``"satellite-sea-surface-temperature"``.
     request : dict
         Dictionary of request parameters following CDSAPI conventions.
-        Must include spatial, temporal, and variable selection keys depending on 
+        Must include spatial, temporal, and variable selection keys depending on
         the dataset.
 
     Returns
