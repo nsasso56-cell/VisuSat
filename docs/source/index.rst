@@ -43,6 +43,7 @@ Copernicus Marine Service.
 
    examples/eumetsat_customisation
    examples/copernicus_global_model
+   examples/eumetsat_animation
 
 .. toctree::
    :maxdepth: 1
