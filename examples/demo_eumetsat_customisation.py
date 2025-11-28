@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import rioxarray
 
 from visusat import eumetsat, utils
-from visusat.eumetsat_products_registry import load_registry, PRODUCTS
+from visusat.eumetsat_products_registry import PRODUCTS, load_registry
 
 # ===============================================================
 # Logging configuration

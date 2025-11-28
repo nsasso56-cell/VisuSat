@@ -22,8 +22,8 @@ from pathlib import Path
 import eumdac
 import numpy as np
 
+from visusat.eumetsat import download_custom_products, get_token
 from visusat.plotting import animate_geotiff_sequence
-from visusat.eumetsat import get_token, download_custom_products
 
 
 def get_lonlat(ds):
