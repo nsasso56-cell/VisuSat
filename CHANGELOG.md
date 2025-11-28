@@ -84,3 +84,11 @@ New function animate_geotiff_sequence in plotting module :
 - Added documentation for the new functions and new example script.
 - Added VisuSat logo in ReadTheDocs and README.
 
+## [0.4.1] - 2025-11-28
+
+### [Fixed]
+- Add PyPI badge in ReadMe.
+- Put raw paths of images in README.md, so that they display also in PyPI website.
+- Add Gif animation in README.md; add animation.gif in examples/images/ dir.
+- Update Features and Tree sections in README.md. 
+
