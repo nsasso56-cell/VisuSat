@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="docs/source/_static/logo_visusat.png" width="420">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/docs/source/_static/logo_visusat.png" width="300">
 </p>
 
 # 🛰️ VisuSat project : 
@@ -8,6 +8,7 @@
 [![Documentation Status](https://readthedocs.org/projects/visusat/badge/?version=latest)](https://visusat.readthedocs.io/en/latest/)
 ![Python Versions](https://img.shields.io/badge/python-3.9+-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/visusat.svg)](https://pypi.org/project/visusat/)
 
 VisuSat is a Python toolkit for visualising, handling and processing satellite and oceanographic data, with dedicated pipelines for :
 
@@ -26,9 +27,10 @@ and advanced visualisation utilities using `cartopy` and `matplotlib`.
 Derived from MTG-FCI Level 2 wind products :
 
 <p align="center">
-  <img src="examples/images/example_AMVs_FCI2.png" width="420">
-  <img src="examples/images/zoom_exampleAMVs_FCI2.png" width="420">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/example_AMVs_FCI2.png" width="420">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/zoom_exampleAMVs_FCI2.png" width="420">
 </p>
+
 ## 🌊 Copernicus Marine Service
 
 Allows to download and visualize available datasets from Copernicus Marine datastore  (https://data.marine.copernicus.eu/products). 
@@ -40,7 +42,7 @@ Example of the the Sea Level Anomaly (in meter) from an aggregate of all availab
 Product: [SEALEVEL_GLO_PHY_L4_NRT_008_046](https://data.marine.copernicus.eu/product/SEALEVEL_GLO_PHY_L4_NRT_008_046/description)
 
 <p align="center">
-  <img src="examples/images/example_Copernicus_allsatellitesGlobalOceanGridded_ssh_%20sealevelanomaly.png" width="700">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/example_Copernicus_allsatellitesGlobalOceanGridded_ssh_%20sealevelanomaly.png" width="700">
 </p>
 
 ### 🌀 Global Ocean Physics (Mercator Ocean)
@@ -49,7 +51,16 @@ Hourly Sea Water Potential Temperature —
 Product: [GLOBAL_ANALYSISFORECAST_PHY_001_024](https://data.marine.copernicus.eu/product/GLOBAL_ANALYSISFORECAST_PHY_001_024/description)
 
 <p align="center">
-  <img src="examples/images/example_Copernicus_GOPhysicsOutputs_hourlymean_sst.png" width="700">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/example_Copernicus_GOPhysicsOutputs_hourlymean_sst.png" width="700">
+</p>
+
+## 📽️ Animation from MTG-FCI L1c products
+
+Effective radiance from Visible 0.6µm channel, over Western Europe, between 12UTC and 18UTC the 22/10/2025.
+Product : [FCI L1c High Resolution Image Data - MTG](https://data.eumetsat.int/product/EO:EUM:DAT:0665)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/animation.gif" width="420">
 </p>
 
 ---
