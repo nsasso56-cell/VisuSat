@@ -92,3 +92,12 @@ New function animate_geotiff_sequence in plotting module :
 - Add Gif animation in README.md; add animation.gif in examples/images/ dir.
 - Update Features and Tree sections in README.md. 
 
+## [0.4.2] - 2025-11-28
+
+### [Fixed]
+- New plotting parameters in animation_geotiff_sequence (plotting.py module). If radiance=True, "Greys_r" cmap is automatically used and coastlines and borders colors are set to 'white'.
+- Update animation.gif in examples/images with these new plotting parameters.
+
+### [Documentation]
+- Add explanation sentences to MTG FCI VIS0.6 animation in README.md.
+
