@@ -57,12 +57,14 @@ def _require_cartopy():
 def animate_geotiff_sequence(
     directory: str,
     *,
-    cmap: str = "gray",
+    cmap: str = "Greys_r",
     fps: int = 2,
+    radiance: bool = True,
     outfile: str = "animation.gif",
     figsize: Tuple = (7, 7),
     percentile_clip: Tuple = (1, 99),
     projection: Optional["ccrs.Projection"] = None,
+    dpi: int = 100,
 ) -> Path:
     """
     Create an animation (GIF/MP4) from a directory of GeoTIFF files.
@@ -96,6 +98,14 @@ def animate_geotiff_sequence(
     ccrs, cfeature = _require_cartopy()
 
     directory = Path(directory)
+
+    # --- Update cosmetics if plot radiances ---
+    if radiance :
+        edgecolor = 'w'
+        gridcolor = 'lightgray'
+    else:
+        edgecolor = 'k'
+        gridcolor = 'gray'
 
     # -------------------------------
     # List and sort files by timestamp
@@ -170,13 +180,14 @@ def animate_geotiff_sequence(
     cbar.set_label(f"{first.long_name}\n({first.unit})")
 
     # --- Cosmetics ---
-    ax.coastlines(resolution="50m")
-    ax.add_feature(cfeature.BORDERS)
-    ax.add_feature(cfeature.LAND, facecolor="lightgray")
+    #ax.coastlines(resolution="50m")
+    ax.add_feature(cfeature.COASTLINE.with_scale("50m"), edgecolor=edgecolor, linewidth=0.8)
+    ax.add_feature(cfeature.BORDERS, edgecolor=edgecolor)
+    #ax.add_feature(cfeature.LAND, edgecolor=edgecolor)
     ax.set_xlabel("Longitude (°)")
     ax.set_ylabel("Latitude (°)")
     gl = ax.gridlines(
-        draw_labels=True, linewidth=0.6, color="gray", alpha=1, linestyle="--"
+        draw_labels=True, linewidth=0.6, color=gridcolor, alpha=1, linestyle="--"
     )
     gl.top_labels = False
     gl.right_labels = False
@@ -213,7 +224,7 @@ def animate_geotiff_sequence(
     # Save animation
     # --------------------------
     outfile = Path(directory) / outfile
-    ani.save(outfile, fps=2, dpi=50, writer="Pillow")
+    ani.save(outfile, fps=fps, dpi=dpi, writer="Pillow")
     logger.info(f"Animation saved -> {outfile}")
 
     return outfile

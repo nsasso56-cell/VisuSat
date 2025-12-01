@@ -56,7 +56,7 @@ logger.info(">>> Dev script started.")
 # --- Get the files in "movie" directory ---
 movie_dir = '/Users/nicolassasso/Documents/Python_projects/VisuSat/outputs/movie/Benjamin2'
 
-path = animate_geotiff_sequence(movie_dir, cmap='Blues')
+path = animate_geotiff_sequence(movie_dir)
 
 logger.info(">>> End of script.")
 

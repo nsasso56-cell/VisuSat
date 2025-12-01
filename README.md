@@ -20,6 +20,8 @@ and advanced visualisation utilities using `cartopy` and `matplotlib`.
 
 📘 Full documentation: https://visusat.readthedocs.io/en/latest/
 
+---
+
 # 🌍 Examples of Visualisations :
 
 ## 🌦️ EUMETSAT Data Store - AMVs (Atmospheric Motion Vectors)
@@ -30,6 +32,18 @@ Derived from MTG-FCI Level 2 wind products :
   <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/example_AMVs_FCI2.png" width="420">
   <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/zoom_exampleAMVs_FCI2.png" width="420">
 </p>
+
+### 📽️ Animation from MTG-FCI L1c products
+
+Effective radiance from Visible 0.6µm channel, over Western Europe, between 12UTC and 16UTC the 22/10/2025.
+Product : [FCI L1c High Resolution Image Data - MTG](https://data.eumetsat.int/product/EO:EUM:DAT:0665)
+
+The 0.6 µm visible channel of MTG FCI is a solar-reflectance channel that is sensitive to surface albedo, clouds (primarily their upper layers), and aerosols. Oceanic and continental surfaces tend to absorb most of the incoming solar radiation, leading to low radiances (dark tones), whereas clouds and aerosols reflect sunlight efficiently, resulting in high radiances (bright tones). In this image, the Benjamin depression is visible over the Atlantic Ocean and is characterized by a vortex-shaped pattern of enhanced radiances associated with thick cloud structures.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/dev/examples/images/animation.gif" width="420">
+</p>
+
 
 ## 🌊 Copernicus Marine Service
 
@@ -54,14 +68,6 @@ Product: [GLOBAL_ANALYSISFORECAST_PHY_001_024](https://data.marine.copernicus.eu
   <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/example_Copernicus_GOPhysicsOutputs_hourlymean_sst.png" width="700">
 </p>
 
-## 📽️ Animation from MTG-FCI L1c products
-
-Effective radiance from Visible 0.6µm channel, over Western Europe, between 12UTC and 18UTC the 22/10/2025.
-Product : [FCI L1c High Resolution Image Data - MTG](https://data.eumetsat.int/product/EO:EUM:DAT:0665)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/nsasso56-cell/VisuSat/main/examples/images/animation_small.gif" width="420">
-</p>
 
 ---
 
