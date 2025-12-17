@@ -122,7 +122,7 @@ def animate_geotiff_sequence(
     # -------------------------------
     # Load first frame → setup CRS & extent
     # -------------------------------
-    first = rioxarray.open_rasterio(os.path.join(directory, geotiffs[0])).isel(band=0)
+    first = rioxarray.open_rasterio(geotiffs[0]).isel(band=0)
     fill_value = first.attrs.get("_FillValue", None)
     if fill_value is not None:
         first = first.where(first != fill_value)
