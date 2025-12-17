@@ -99,13 +99,26 @@ def get_token(credentials_path: Path = DEFAULT_CREDENTIALS_PATH):
     eumdac.AccessToken
         A valid authentication token for accessing EUMETSAT Data Store products.
     """
-    if not credentials_path.exists():
+    #if not credentials_path.exists():
+    #    raise FileNotFoundError(
+    #        f"Could not find EUMETSAT credentials. Please create the file at: {credentials_path}"
+    #    )
+    #with open(credentials_path) as f:
+    #    creds = json.load(f)
+
+    consumer = os.getenv("EUMETSAT_USERNAME")
+    secret = os.getenv("EUMETSAT_SECRET")
+    
+    #logger.info(consumer)
+    #logger.info(secret)
+
+    if not consumer or not secret:
         raise FileNotFoundError(
-            f"Could not find EUMETSAT credentials. Please create the file at: {credentials_path}"
+            "Could not find EUMETSAT credentials. "
+            "Please set EUMETSAT_USERNAME and EUMETSAT_SECRET."
         )
-    with open(credentials_path) as f:
-        creds = json.load(f)
-    token = eumdac.AccessToken((creds["consumer"], creds["secret"]))
+
+    token = eumdac.AccessToken((consumer, secret))
 
     return token
 
