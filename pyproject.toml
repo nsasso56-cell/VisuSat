@@ -44,6 +44,7 @@ dependencies = [
     "sphinx-rtd-theme>=3.0.2",
     "myst-parser>=3.0.1",
     "tree>=0.2.4",
+    "cartopy>=0.23.0",
 ]
 
 [project.urls]
