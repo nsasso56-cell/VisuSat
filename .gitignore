@@ -5,6 +5,7 @@ inputs/*
 # --- Never commit credentials ---
 *.json
 !data/*.json   # allow official registry files
+.env
 
 # --- Data directories ---
 data/*
