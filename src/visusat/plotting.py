@@ -145,7 +145,7 @@ def animate_geotiff_sequence(
     # -------------------------------
     vmin, vmax = np.inf, -np.inf
     for f in geotiffs:
-        tmp = rioxarray.open_rasterio(os.path.join(directory, f)).isel(band=0)
+        tmp = rioxarray.open_rasterio(f).isel(band=0)
         # Replace FillValue by NaN if available
         fill_value = tmp.attrs.get("_FillValue", None)
         if fill_value is not None:
